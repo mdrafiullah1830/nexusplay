@@ -1,0 +1,252 @@
+// ============================================================
+// NEXUSPLAY — Product Card & Grid (Nike-style)
+// ============================================================
+@use "tokens" as *;
+
+// -- Product Card ---------------------------------------------
+.p-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+
+  &--tilt {
+    transform-style: preserve-3d;
+    transition: transform 0.1s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  &__media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: $gray-100;
+    border-radius: $radius-md;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.45s $ease;
+  }
+
+  &:hover &__img {
+    transform: scale(1.06);
+  }
+
+  &__badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    background: $accent;
+    color: $ink;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    padding: 4px 9px;
+    border-radius: $radius-pill;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__badge--dark {
+    background: $ink;
+    color: $white;
+  }
+
+  &__badge--muted {
+    background: $gray-300;
+    color: $gray-700;
+  }
+
+  &__body {
+    padding: $space-md 4px $space-lg;
+  }
+
+  &__brand {
+    font-size: $fs-sm;
+    font-weight: 700;
+  }
+
+  &__name {
+    font-size: $fs-sm;
+    font-weight: 400;
+    color: $gray-600;
+    margin-top: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__meta {
+    font-size: $fs-xs;
+    color: $gray-500;
+    margin-top: 6px;
+  }
+
+  &__price {
+    margin-top: $space-sm;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    strong {
+      font-size: 0.9375rem;
+      font-weight: 700;
+    }
+
+    s {
+      font-size: $fs-sm;
+      color: $gray-500;
+    }
+  }
+
+  &__actions {
+    margin-top: $space-sm;
+  }
+
+  &__btn {
+    @include pill-button;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: $fs-sm;
+
+    &--disabled {
+      background: $gray-200;
+      color: $gray-500;
+      cursor: not-allowed;
+
+      &:hover {
+        transform: none;
+        opacity: 1;
+      }
+    }
+  }
+}
+
+// -- Product Grid ---------------------------------------------
+.p-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md $space-sm;
+
+  @include md {
+    grid-template-columns: repeat(3, 1fr);
+    gap: $space-lg $space-md;
+  }
+
+  @include lg {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// -- Product Detail Gallery -----------------------------------
+.pd-gallery {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-md;
+  align-items: start;
+
+  &__main {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background: $gray-100;
+    border-radius: $radius-md;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: $space-sm;
+
+    .pd-thumb {
+      width: 70px;
+      height: 70px;
+      border-radius: $radius-md;
+      border: 2px solid transparent;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s $ease, transform 0.2s $ease;
+
+      &:hover {
+        transform: translateY(-2px) scale(1.05);
+      }
+
+      &.is-active {
+        border-color: $accent;
+        transform: translateY(-2px);
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+}
+
+// -- Staggered card entrance ---------------------------------------
+.p-card {
+  opacity: 0;
+  animation: cardRise 0.5s $ease forwards;
+  animation-delay: var(--card-delay, 0s);
+}
+
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Stagger delays for grid and rail layouts
+.p-grid .p-card:nth-child(1) { --card-delay: 0.05s; }
+.p-grid .p-card:nth-child(2) { --card-delay: 0.1s; }
+.p-grid .p-card:nth-child(3) { --card-delay: 0.15s; }
+.p-grid .p-card:nth-child(4) { --card-delay: 0.2s; }
+.p-grid .p-card:nth-child(5) { --card-delay: 0.25s; }
+.p-grid .p-card:nth-child(6) { --card-delay: 0.3s; }
+.p-grid .p-card:nth-child(7) { --card-delay: 0.35s; }
+.p-grid .p-card:nth-child(8) { --card-delay: 0.4s; }
+
+.p-rail .p-card:nth-child(1) { --card-delay: 0.05s; }
+.p-rail .p-card:nth-child(2) { --card-delay: 0.1s; }
+.p-rail .p-card:nth-child(3) { --card-delay: 0.15s; }
+.p-rail .p-card:nth-child(4) { --card-delay: 0.2s; }
+.p-rail .p-card:nth-child(5) { --card-delay: 0.25s; }
+.p-rail .p-card:nth-child(6) { --card-delay: 0.3s; }
+
+// -- Horizontal Carousel --------------------------------------
+.p-rail {
+  display: flex;
+  gap: $space-md;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: $space-sm;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .p-card {
+    flex: 0 0 clamp(220px, 24vw, 300px);
+    scroll-snap-align: start;
+  }
+}

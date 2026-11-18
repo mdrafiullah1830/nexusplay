@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Account — NexusPlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  </head>
+  <body data-page="register">
+    <div id="navbar-root"></div>
+
+    <main class="page-pad">
+      <div class="container container--narrow">
+        <div class="auth-card">
+          <h1 class="page-title">Create Account</h1>
+          <p class="page-sub">Join NexusPlay — track orders, faster checkout.</p>
+
+          <form id="auth-form" class="auth-form">
+            <label>Full Name
+              <input name="name" type="text" required placeholder="Your name" />
+            </label>
+            <label>Email
+              <input name="email" type="email" required placeholder="you@example.com" />
+            </label>
+            <label>Phone
+              <input name="phone" type="tel" placeholder="01XXXXXXXXX" />
+            </label>
+            <label>Password
+              <input name="password" type="password" required minlength="6" placeholder="At least 6 characters" />
+            </label>
+            <div class="form-error" id="auth-error" hidden></div>
+            <button type="submit" class="btn btn--dark btn--lg btn--block" id="auth-submit">Create Account</button>
+          </form>
+
+          <p class="auth-alt">Already have an account? <a href="/login.html">Log in</a></p>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

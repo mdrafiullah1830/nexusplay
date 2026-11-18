@@ -1,0 +1,144 @@
+# 🎮 NexusPlay
+
+A modern gaming e-commerce store for Bangladesh — controllers, keyboards, mice and
+accessories at honest prices. Built with a Nike-inspired design system.
+
+**Frontend:** HTML5 · SCSS · TypeScript · Vite (MPA)
+**Backend:** ASP.NET Core 8 Web API · JWT auth
+**Database:** MongoDB
+
+---
+
+## ✨ Features
+
+- **Catalogue** — 22 seeded products with category / brand / availability / price
+  filters, search, sorting and pagination
+- **Product detail** — gallery, colour & quantity pickers, specs table, related items
+- **Cart** — localStorage-backed cart with live badge, qty steppers, free-delivery
+  progress (free delivery over BDT 5,000, otherwise BDT 120)
+- **Checkout** — Cash on Delivery **and** bKash (manual TrxID submission)
+- **Order tracking** — track by order number + phone, visual timeline
+- **Auth** — register / login with JWT (BCrypt-hashed passwords)
+- **Admin panel** — dashboard stats, product CRUD, order status management,
+  one-click bKash payment verification
+- **Dark mode** — follows system preference (`prefers-color-scheme`)
+- **Responsive** — mega-menu on desktop, slide-in drawer on mobile
+
+## 📁 Project structure
+
+```
+nexusplay/
+├── frontend/          # Vite + TypeScript + SCSS multi-page app
+│   ├── *.html         # index, shop, product, cart, checkout, track,
+│   │                  # login, register, admin
+│   └── src/
+│       ├── components/  # navbar (mega menu + drawer), footer, cards, hero
+│       ├── pages/       # one module per page
+│       ├── services/    # api client, cart, auth, toast
+│       ├── styles/      # SCSS design system (tokens → base → components)
+│       └── data/        # static fallback catalogue
+└── backend/           # .NET solution
+    ├── NexusPlay.Core   # models + repository interfaces
+    ├── NexusPlay.Data   # MongoDB context, repositories, product seeder
+    └── NexusPlay.Api    # controllers, JWT, seeding, Swagger
+```
+
+## 🚀 Running locally
+
+### Prerequisites
+
+- MongoDB running on `mongodb://localhost:27017`
+- .NET 8 SDK
+- Node.js 18+
+
+### 1. Start MongoDB
+
+```bash
+mongod --config /opt/homebrew/etc/mongod.conf     # macOS (Homebrew)
+# or: brew services start mongodb-community  (Linuxbrew / services-enabled setups)
+```
+
+### 2. Backend (port 5000)
+
+```bash
+cd backend
+dotnet run --project NexusPlay.Api
+```
+
+On first run it automatically:
+- creates indexes,
+- seeds **22 products**,
+- creates the admin account.
+
+API base: `http://localhost:5000/api` (Swagger UI at `/swagger` in dev).
+
+### 3. Frontend (port 5173)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173** — `/api` requests are proxied to the backend.
+
+### Production build
+
+```bash
+cd frontend && npm run build     # output in frontend/dist
+```
+
+## 🔐 Credentials
+
+| Role  | Email               | Password   |
+|-------|---------------------|------------|
+| Admin | `admin@nexusplay.com` | `Admin@123` |
+
+Admin panel: `http://localhost:5173/admin.html`
+
+> Change `Admin:*` and `Jwt:Secret` in
+> `backend/NexusPlay.Api/appsettings.json` before deploying.
+
+## 🧪 Order flow
+
+| Step | What happens |
+|------|--------------|
+| 1 | Customer adds items → checkout → fills address |
+| 2a | **COD** → order created as `pending` |
+| 2b | **bKash** → customer sends money to `01782577251`, pastes TrxID → order created as `awaiting-verification` |
+| 3 | Admin verifies TrxID in the admin panel → `confirmed` |
+| 4 | `shipped` → `delivered` (status changes are recorded in the tracking timeline) |
+
+Prices and delivery fees are **always re-calculated server-side** when an order is
+placed — client-sent amounts are never trusted.
+
+Order numbers look like `NP2611175722` (`NP` + date + random). Customers track
+orders with the order number + the phone they ordered with.
+
+## 🛠 Useful API endpoints
+
+```
+GET    /api/products?category=&brand=&stock=&min=&max=&q=&sort=&page=
+GET    /api/products/{id}
+POST   /api/auth/register          { name, email, phone?, password }
+POST   /api/auth/login             { email, password }
+GET    /api/auth/me                (Bearer)
+POST   /api/orders                 { customer, items, paymentMethod, bkashTrxId? }
+GET    /api/orders/track?orderNo=&phone=
+GET    /api/orders/my              (Bearer)
+GET    /api/admin/stats            (Bearer · admin)
+GET    /api/admin/products         (Bearer · admin)
+POST   /api/admin/products         (Bearer · admin)
+PUT    /api/admin/products/{id}    (Bearer · admin)
+DELETE /api/admin/products/{id}    (Bearer · admin)
+GET    /api/admin/orders?status=&q= (Bearer · admin)
+PUT    /api/admin/orders/{id}/status  { status, note? }  (Bearer · admin)
+```
+
+## 📝 Notes
+
+- Product images are currently emoji + brand-gradient placeholders; drop real
+  images into the `image` field of any product to use them.
+- The bKash flow is intentionally **manual** (TrxID verification by admin) — no
+  payment gateway integration.
+- JWT expiry defaults to 7 days (`Jwt:ExpiryMinutes`).

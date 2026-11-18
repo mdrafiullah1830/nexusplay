@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop — NexusPlay</title>
+    <meta name="description" content="Shop gaming controllers, keyboards, mice and accessories at NexusPlay." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  </head>
+  <body data-page="shop">
+    <div id="navbar-root"></div>
+
+    <main>
+      <section class="shop-hero">
+        <div class="container">
+          <h1 class="page-title">Shop All</h1>
+          <p class="shop-hero__sub">Controllers, keyboards, mice &amp; gear — delivered across Bangladesh.</p>
+        </div>
+      </section>
+
+      <div class="container shop-layout">
+        <button class="filters-toggle" id="filters-toggle">☰ Filters</button>
+
+        <aside class="shop-sidebar" id="shop-filters"></aside>
+
+        <section class="shop-main">
+          <div class="shop-toolbar">
+            <span id="shop-count">Loading…</span>
+            <select id="shop-sort" class="filter-select">
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="newest">Newest</option>
+              <option value="discount">Biggest discount</option>
+            </select>
+          </div>
+          <div class="p-grid" id="shop-grid"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="footer-root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

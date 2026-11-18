@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexusPlay — Gaming Controllers & Accessories, Delivered Across Bangladesh</title>
+    <meta
+      name="description"
+      content="NexusPlay — honest prices, real after-sales support. GameSir, Flydigi, 8BitDo controllers and gaming accessories delivered across Bangladesh."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  </head>
+  <body data-page="home">
+    <!-- Navbar -->
+    <div id="navbar-root"></div>
+
+    <main>
+      <!-- ============ HERO SLIDER ============ -->
+      <section class="hero" aria-label="Highlights">
+        <div class="hero__slide hero__slide--1 is-active">
+          <div class="hero__content">
+            <div class="hero__eyebrow">New Release</div>
+            <h1 class="hero__title">GameSir G7 Pro 8K</h1>
+            <p class="hero__sub">Phantom Blade Zero Limited Edition — 8K polling, multi-platform, pre-order now.</p>
+            <div class="hero__cta">
+              <a class="hero__btn" href="/shop?category=controllers">Shop Controllers</a>
+              <a class="hero__btn hero__btn--ghost" href="/track">Track Order</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__slide hero__slide--2">
+          <div class="hero__content">
+            <div class="hero__eyebrow">Flydigi Apex Series</div>
+            <h1 class="hero__title">Own The<br />Controller Wall</h1>
+            <p class="hero__sub">Apex 6 Pro, Vader 5 Pro & more — Hall-effect sticks, 8K polling, pro-grade control.</p>
+            <div class="hero__cta">
+              <a class="hero__btn" href="/shop?brand=flydigi">Shop Flydigi</a>
+              <a class="hero__btn hero__btn--ghost" href="/shop">View All</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__slide hero__slide--3">
+          <div class="hero__content">
+            <div class="hero__eyebrow">Budget Kings</div>
+            <h1 class="hero__title">Play More,<br />Pay Less</h1>
+            <p class="hero__sub">Controllers from BDT 2,900 — with real after-sales support across Bangladesh.</p>
+            <div class="hero__cta">
+              <a class="hero__btn" href="/shop?max=5000">Shop Under 5K</a>
+              <a class="hero__btn hero__btn--ghost" href="/shop?stock=pre-order">Pre-Orders</a>
+            </div>
+          </div>
+        </div>
+
+        <button class="hero__arrow hero__arrow--prev" aria-label="Previous slide">‹</button>
+        <button class="hero__arrow hero__arrow--next" aria-label="Next slide">›</button>
+
+        <div class="hero__dots">
+          <button class="hero__dot is-active" aria-label="Slide 1"></button>
+          <button class="hero__dot" aria-label="Slide 2"></button>
+          <button class="hero__dot" aria-label="Slide 3"></button>
+        </div>
+      </section>
+
+      <!-- ============ FEATURED ============ -->
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">Featured</h2>
+          <a class="section__link" href="/shop">Shop All</a>
+        </div>
+        <div class="section__inner">
+          <div class="featured-grid" id="featured-grid"></div>
+        </div>
+      </section>
+
+      <!-- ============ TRENDING ============ -->
+      <section class="section section--gray">
+        <div class="section__head">
+          <h2 class="section__title">Trending</h2>
+          <a class="section__link" href="/shop?sort=featured">See What's Hot</a>
+        </div>
+        <div class="section__inner">
+          <div class="trending-row" id="trending-row"></div>
+        </div>
+      </section>
+
+      <!-- ============ BESTSELLERS RAIL ============ -->
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">Bestsellers</h2>
+          <a class="section__link" href="/shop?sort=featured">Shop All</a>
+        </div>
+        <div class="section__inner">
+          <div class="p-rail" id="bestseller-rail"></div>
+        </div>
+      </section>
+
+      <!-- ============ NEW ARRIVALS RAIL ============ -->
+      <section class="section section--gray">
+        <div class="section__head">
+          <h2 class="section__title">Biggest Savings</h2>
+          <a class="section__link" href="/shop?sort=discount">Shop All</a>
+        </div>
+        <div class="section__inner">
+          <div class="p-rail" id="new-rail"></div>
+        </div>
+      </section>
+
+      <!-- ============ CATEGORIES ============ -->
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">Shop by Category</h2>
+        </div>
+        <div class="section__inner">
+          <div class="cat-row" id="cat-row"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <div id="footer-root"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

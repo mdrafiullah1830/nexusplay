@@ -1,0 +1,318 @@
+// ============================================================
+// NEXUSPLAY — Home Sections
+// ============================================================
+@use "tokens" as *;
+
+.section {
+  padding-block: $space-2xl;
+
+  &--gray {
+    background: $gray-50;
+  }
+
+  &__head {
+    @include container;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: $space-md;
+    margin-bottom: $space-lg;
+  }
+
+  &__title {
+    @include heading-display;
+    font-size: $fs-h2;
+  }
+
+  &__link {
+    font-size: $fs-sm;
+    font-weight: 700;
+    white-space: nowrap;
+    border-bottom: 2px solid $ink;
+    padding-bottom: 2px;
+    transition: color $speed $ease, border-color $speed $ease;
+
+    &:hover {
+      color: $gray-500;
+      border-color: $gray-500;
+    }
+  }
+
+  &__inner {
+    @include container;
+  }
+}
+
+// -- Featured tiles (Nike "Featured" grid) --------------------
+.featured-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-md;
+
+  @include md {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include xl {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile {
+  position: relative;
+  border-radius: $radius-md;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: $space-lg;
+  color: $white;
+  isolation: isolate;
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transition: transform 0.5s $ease;
+  }
+
+  &:hover &__bg {
+    transform: scale(1.05);
+  }
+
+  &__label {
+    font-family: $font-display;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  &__sub {
+    font-size: $fs-sm;
+    opacity: 0.85;
+    margin-top: 4px;
+    margin-bottom: $space-md;
+  }
+
+  &__btn {
+    @include pill-button($white, $ink);
+    align-self: flex-start;
+    padding: 0.55rem 1.4rem;
+  }
+}
+
+// Background variants
+.tile__bg--g1 {
+  background: linear-gradient(150deg, #2b2b2b, #0e0e0e);
+}
+.tile__bg--g2 {
+  background: linear-gradient(150deg, #1c2a4a, #0a0f1c);
+}
+.tile__bg--g3 {
+  background: linear-gradient(150deg, #4a1c2e, #170a10);
+}
+.tile__bg--g4 {
+  background: linear-gradient(150deg, #243b1f, #0b130a);
+}
+
+// -- Trending row ---------------------------------------------
+.trending-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-md;
+
+  @include md {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include lg {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.trend-card {
+  position: relative;
+  border-radius: $radius-md;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: flex-end;
+  padding: $space-lg;
+  color: $white;
+  isolation: isolate;
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transition: transform 0.5s $ease;
+  }
+
+  &:hover &__bg {
+    transform: scale(1.06);
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: clamp(1.25rem, 1.8vw, 1.6rem);
+    line-height: 1;
+  }
+
+  &__cta {
+    font-size: $fs-sm;
+    font-weight: 700;
+    margin-top: 6px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.trend-card__bg--t1 {
+  background: linear-gradient(135deg, #3d3d3d, #101010);
+}
+.trend-card__bg--t2 {
+  background: linear-gradient(135deg, #23345c, #0b1020);
+}
+.trend-card__bg--t3 {
+  background: linear-gradient(135deg, #56341a, #17100a);
+}
+.trend-card__bg--t4 {
+  background: linear-gradient(135deg, #1f4a45, #081513);
+}
+
+// -- Category tiles -------------------------------------------
+.cat-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md;
+
+  @include lg {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.cat-tile {
+  text-align: center;
+  cursor: pointer;
+
+  &__circle {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: $gray-100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    overflow: hidden;
+    transition: transform $speed $ease, background $speed $ease;
+  }
+
+  &:hover &__circle {
+    transform: translateY(-6px);
+    background: $accent;
+  }
+
+  &__name {
+    font-size: $fs-sm;
+    font-weight: 700;
+    margin-top: $space-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
+// -- Footer ---------------------------------------------------
+.footer {
+  background: $ink;
+  color: $white;
+  padding-top: $space-2xl;
+
+  &__grid {
+    @include container;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-xl;
+
+    @include md {
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+  }
+
+  &__brand {
+    font-family: $font-display;
+    font-weight: 900;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+
+  &__tagline {
+    font-size: $fs-sm;
+    color: rgba(255, 255, 255, 0.65);
+    margin-top: $space-sm;
+    max-width: 320px;
+  }
+
+  &__contact {
+    margin-top: $space-md;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: $fs-sm;
+
+    a:hover {
+      color: $accent;
+    }
+  }
+
+  &__col-title {
+    font-family: $font-body;
+    font-size: $fs-xs;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $gray-500;
+    margin-bottom: $space-md;
+  }
+
+  &__item {
+    display: block;
+    font-size: $fs-sm;
+    padding: 0.35rem 0;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color $speed $ease;
+
+    &:hover {
+      color: $accent;
+    }
+  }
+
+  &__bottom {
+    @include container;
+    margin-top: $space-2xl;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-block: $space-lg;
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-md;
+    justify-content: space-between;
+    font-size: $fs-xs;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  &__social {
+    display: flex;
+    gap: $space-md;
+
+    a {
+      &:hover {
+        color: $accent;
+      }
+    }
+  }
+}

@@ -1,0 +1,162 @@
+// ============================================================
+// NEXUSPLAY — Hero Slider (Nike full-screen style)
+// ============================================================
+@use "tokens" as *;
+
+.hero {
+  position: relative;
+  height: calc(100vh - #{$navbar-h} - 30px);
+  min-height: 520px;
+  overflow: hidden;
+  background: $ink;
+
+  &__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.7s $ease, visibility 0.7s;
+    display: flex;
+    align-items: flex-end;
+
+    &.is-active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    // Background variants (placeholder for real images)
+    &--1 {
+      background:
+        radial-gradient(ellipse at 70% 30%, rgba(215, 255, 62, 0.25), transparent 55%),
+        linear-gradient(160deg, #1a1a1a 0%, #0a0a0a 60%, #161616 100%);
+    }
+    &--2 {
+      background:
+        radial-gradient(ellipse at 25% 40%, rgba(72, 130, 255, 0.28), transparent 55%),
+        linear-gradient(200deg, #141414 0%, #0b0b12 60%, #101018 100%);
+    }
+    &--3 {
+      background:
+        radial-gradient(ellipse at 75% 60%, rgba(255, 72, 120, 0.22), transparent 55%),
+        linear-gradient(140deg, #17110f 0%, #0d0a0a 60%, #151010 100%);
+    }
+  }
+
+  &__content {
+    @include container;
+    position: relative;
+    z-index: 2;
+    padding-bottom: clamp(4rem, 10vh, 7rem);
+    color: $white;
+    max-width: 900px;
+    margin-left: max((100vw - #{$container-max}) / 2 + #{$container-pad}, #{$container-pad});
+  }
+
+  &__eyebrow {
+    font-size: $fs-sm;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: $accent;
+    margin-bottom: $space-sm;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: $fs-hero;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+  }
+
+  &__sub {
+    font-size: clamp(1rem, 1.6vw, 1.25rem);
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: $space-md;
+    max-width: 540px;
+    font-weight: 400;
+  }
+
+  &__cta {
+    margin-top: $space-lg;
+    display: flex;
+    gap: $space-md;
+    flex-wrap: wrap;
+  }
+
+  &__btn {
+    @include pill-button($white, $ink);
+
+    &--ghost {
+      background: transparent;
+      color: $white;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        opacity: 1;
+      }
+    }
+  }
+
+  // -- Controls -------------------------------------------------
+  &__dots {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+  }
+
+  &__dot {
+    width: 28px;
+    height: 4px;
+    border-radius: $radius-pill;
+    background: rgba(255, 255, 255, 0.35);
+    border: none;
+    cursor: pointer;
+    transition: background $speed $ease;
+
+    &.is-active {
+      background: $accent;
+    }
+  }
+
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(6px);
+    border: none;
+    color: $white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: none;
+    transition: background $speed $ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    @include lg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &--prev {
+      left: 1.5rem;
+    }
+    &--next {
+      right: 1.5rem;
+    }
+  }
+}
