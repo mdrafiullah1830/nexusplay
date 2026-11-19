@@ -1409,3 +1409,137 @@ textarea {
   font-size: $fs-sm;
   margin-top: $space-md;
 }
+
+// -- Wishlist page ---------------------------------------------
+.wishlist-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-md;
+  margin-bottom: $space-lg;
+
+  &__count {
+    font-size: $fs-sm;
+    font-weight: 700;
+    color: $gray-600;
+    white-space: nowrap;
+
+    .wishlist-count {
+      color: $danger;
+      font-size: $fs-h3;
+      font-weight: 900;
+    }
+  }
+}
+
+.wishlist-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-xl;
+  align-items: start;
+
+  @include lg {
+    grid-template-columns: 1.8fr 1fr;
+  }
+}
+
+.wishlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.wishlist-item {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md;
+  border: 1px solid $gray-200;
+  border-radius: $radius-md;
+  background: $white;
+  transition: transform $speed $ease, box-shadow $speed $ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px -18px rgba(0, 0, 0, 0.45);
+  }
+
+  img {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: $radius-sm;
+    background: $gray-100;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: $fs-sm;
+    color: $gray-600;
+  }
+
+  strong {
+    color: $gray-700;
+    font-size: $fs-sm;
+  }
+
+  .wishlist-remove:hover {
+    background: #fdecec;
+    border-color: #f3c2c2;
+    color: $danger;
+  }
+}
+
+.empty-wishlist {
+  text-align: center;
+  padding: $space-3xl $space-md;
+  color: $gray-600;
+  font-size: $fs-h3;
+}
+
+.wishlist-summary {
+  border: 1px solid $gray-200;
+  border-radius: $radius-lg;
+  background: $gray-50;
+  padding: $space-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+
+  span {
+    font-size: $fs-h3;
+    font-weight: 900;
+  }
+
+  p {
+    font-size: $fs-sm;
+    color: $gray-600;
+  }
+
+  .btn {
+    align-self: flex-start;
+  }
+}
+
+// -- Related-products skeleton (product page) -------------------
+.p-skeleton {
+  flex: 0 0 clamp(220px, 24vw, 300px);
+  aspect-ratio: 3 / 4;
+  border-radius: $radius-md;
+  background: linear-gradient(100deg, $gray-100 40%, $gray-200 50%, $gray-100 60%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.2s linear infinite;
+}
+
+@keyframes skeletonShimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}

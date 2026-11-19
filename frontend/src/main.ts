@@ -7,7 +7,7 @@ import { initFooter } from "./components/footer";
 import { initHeroSlider } from "./components/heroSlider";
 import { initHomePage } from "./pages/home";
 import { initShopPage } from "./pages/shop";
-import { initProductPage } from "./pages/product";
+import { initProductPage, initWishlistPage } from "./pages/product";
 import { initCartPage } from "./pages/cart";
 import { initCheckoutPage } from "./pages/checkout";
 import { initTrackPage } from "./pages/track";
@@ -68,6 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
     case "cart":
       initCartPage();
       break;
+    case "wishlist":
+      initWishlistPage();
+      break;
     case "checkout":
       initCheckoutPage();
       break;
@@ -80,6 +83,18 @@ document.addEventListener("DOMContentLoaded", () => {
       break;
     case "admin":
       initAdminPage();
+      break;
+    default:
+      // Unknown data-page → simple 404 message (never a blank screen)
+      document.querySelector("main")?.insertAdjacentHTML(
+        "afterbegin",
+        `<div class="page-message">
+           <span style="font-size:3rem">🧭</span>
+           <h2>Page not found</h2>
+           <p>The page you're looking for doesn't exist.</p>
+           <a class="btn btn--dark" href="/">Back to Home</a>
+         </div>`,
+      );
       break;
   }
 });

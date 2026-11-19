@@ -232,10 +232,31 @@ document.addEventListener("click", (e) => {
     wishlist.add(productId);
     addBtn.innerHTML = "<span>♥ Added</span>";
     setTimeout(() => {
-      addBtn.innerHTML = "<span>♥ Wishlist</span>";
+      // Restore to the REAL state — the item may still be saved
+      addBtn.innerHTML = wishlist.has(productId) ? "<span>♥ Added</span>" : "<span>♥ Wishlist</span>";
     }, 2000);
   }
 });
+
+// Delegated handler for ".wishlist-remove" on the wishlist page —
+// removing dispatches wishlist:change, which re-renders the list.
+document.addEventListener("click", (e) => {
+  const removeBtn = (e.target as HTMLElement).closest<HTMLElement>(".wishlist-remove");
+  if (!removeBtn) return;
+
+  const productId = removeBtn.dataset.productId;
+  if (productId) wishlist.remove(productId);
+});
+
+/** Current wishlist size (for the navbar badge). */
+export function getWishlistCount(): number {
+  return wishlist.count();
+}
+
+/** Wishlist page bootstrap — renders the list into wishlist.html. */
+export function initWishlistPage(): void {
+  renderWishlist();
+}
 
 // ============================================================
 // Page bootstrap
@@ -365,7 +386,11 @@ function mount(product: Product): void {
         <a class="section__link" href="/shop.html">Shop All</a>
       </div>
       <div class="section__inner">
-        <div class="p-rail" id="related-rail"></div>
+        <div class="p-rail" id="related-rail">
+          <div class="p-skeleton"></div>
+          <div class="p-skeleton"></div>
+          <div class="p-skeleton"></div>
+        </div>
       </div>
     </section>`;
 

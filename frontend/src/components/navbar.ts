@@ -3,6 +3,7 @@
 // ============================================================
 import { auth } from "../services/auth";
 import { cart } from "../services/cart";
+import { getWishlistCount } from "../pages/product";
 
 interface NavColumn {
   title: string;
@@ -70,6 +71,9 @@ export function initNavbar(): void {
 
         <div class="navbar__actions" id="nav-actions">
           <a class="navbar__icon-btn" href="/shop.html" aria-label="Search">🔍</a>
+          <a class="navbar__icon-btn navbar__wishlist" href="/wishlist.html" aria-label="Wishlist">
+            ♥<span class="navbar__wishlist-count" id="wishlist-count">${getWishlistCount()}</span>
+          </a>
           <span id="account-area">${renderAccountArea()}</span>
           <a class="navbar__icon-btn" href="/cart.html" aria-label="Cart">
             🛒<span class="navbar__cart-count" id="cart-count">${cart.count()}</span>
@@ -119,6 +123,12 @@ export function initNavbar(): void {
   cart.onChange(() => {
     const badge = document.getElementById("cart-count");
     if (badge) badge.textContent = String(cart.count());
+  });
+
+  // Keep wishlist badge fresh (any ♥ add/remove anywhere on the site)
+  document.addEventListener("wishlist:change", () => {
+    const badge = document.getElementById("wishlist-count");
+    if (badge) badge.textContent = String(getWishlistCount());
   });
 }
 
