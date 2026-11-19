@@ -7,3 +7,4 @@
 @use "product";
 @use "sections";
 @use "pages";
+@use "3d" as *; // must stay last — overrides the partials above

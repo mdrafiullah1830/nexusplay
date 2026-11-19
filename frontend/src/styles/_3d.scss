@@ -1,0 +1,272 @@
+// ============================================================
+// NEXUSPLAY — Raw 3D animation layer
+// Hand-coded CSS 3D transforms only — no animation libraries.
+// Loaded LAST so these overrides win over the component partials.
+//
+// Hard rules (see incomplete.md):
+//   * never transform <body> or its wrappers — it would become the
+//     containing block for position:fixed children (mobile drawer,
+//     modal, toast) — _base.scss:78
+//   * reveal hidden state is gated behind html.has-anim, which JS
+//     only sets when IntersectionObserver exists → content is never
+//     invisible without JS
+//   * prefers-reduced-motion opt-out here AND in animations.ts
+// ============================================================
+@use "tokens" as *;
+
+// ============================================================
+// 0. Reduced motion — CSS half of the opt-out
+// ============================================================
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ============================================================
+// 1. Hero 3D slider
+//    Direction-aware: data-dir="next"  → in from right / out to left
+//                     data-dir="prev"  → mirror
+//    Entrance runs as a keyframe animation (driven by data-dir),
+//    leaving runs as a class transition (.is-leaving).
+// ============================================================
+.hero {
+  perspective: 1500px;
+  perspective-origin: 50% 45%;
+}
+
+.hero__slide {
+  // Resting state = identity, so enter/leave always travel from/to
+  // a well-defined place (also what .is-snap parks back to).
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 0, 0) rotateY(0);
+  backface-visibility: hidden;
+  transition:
+    opacity 0.6s $ease,
+    transform 0.75s $ease,
+    visibility 0.75s;
+}
+
+.hero__slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  // Parallax tilt — --rx/--ry are written on .hero by animations.ts
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition:
+    opacity 0.6s $ease,
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1),
+    visibility 0s;
+}
+
+// Instant park used by heroSlider.ts when a leaving slide must be
+// reset without animating back to the centre.
+.hero__slide.is-snap {
+  transition: none;
+}
+
+.hero[data-dir="next"] .hero__slide.is-active {
+  animation: heroInNext 0.85s $ease;
+}
+.hero[data-dir="prev"] .hero__slide.is-active {
+  animation: heroInPrev 0.85s $ease;
+}
+
+.hero[data-dir="next"] .hero__slide.is-leaving {
+  opacity: 0;
+  visibility: visible;
+  transform: translate3d(-20%, 0, -340px) rotateY(22deg);
+}
+.hero[data-dir="prev"] .hero__slide.is-leaving {
+  opacity: 0;
+  visibility: visible;
+  transform: translate3d(20%, 0, -340px) rotateY(-22deg);
+}
+
+.hero__slide.is-leaving {
+  transition:
+    opacity 0.55s $ease,
+    transform 0.75s $ease,
+    visibility 0s 0.75s;
+}
+
+@keyframes heroInNext {
+  from {
+    opacity: 0;
+    transform: translate3d(20%, 0, -340px) rotateY(-22deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateY(0);
+  }
+}
+
+@keyframes heroInPrev {
+  from {
+    opacity: 0;
+    transform: translate3d(-20%, 0, -340px) rotateY(22deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateY(0);
+  }
+}
+
+// -- Staggered 3D entrance of the copy on the active slide -------
+// Scoped under [data-dir] so it only runs once JS owns the slider;
+// without JS the copy is simply visible (no hidden start state).
+.hero[data-dir] .hero__slide.is-active .hero__eyebrow,
+.hero[data-dir] .hero__slide.is-active .hero__title,
+.hero[data-dir] .hero__slide.is-active .hero__sub,
+.hero[data-dir] .hero__slide.is-active .hero__cta {
+  animation: heroTextIn 0.7s $ease backwards;
+  animation-delay: var(--text-delay, 0s);
+}
+
+.hero[data-dir] .hero__slide.is-active .hero__eyebrow {
+  --text-delay: 0.15s;
+}
+.hero[data-dir] .hero__slide.is-active .hero__title {
+  --text-delay: 0.26s;
+}
+.hero[data-dir] .hero__slide.is-active .hero__sub {
+  --text-delay: 0.4s;
+}
+.hero[data-dir] .hero__slide.is-active .hero__cta {
+  --text-delay: 0.54s;
+}
+
+@keyframes heroTextIn {
+  from {
+    opacity: 0;
+    // self-contained perspective() — slides' children are flattened
+    // (no preserve-3d chain), so depth has to be per-element
+    transform: perspective(900px) translate3d(0, 40px, -120px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) translate3d(0, 0, 0);
+  }
+}
+
+// ============================================================
+// 2. Scroll reveal
+//    Hidden state only under html.has-anim (JS-gated) — without
+//    JS every target below just renders normally.
+//    Transition lives on .is-inview so hiding is instant (no
+//    fade-out flash when the class is first applied).
+// ============================================================
+.has-anim .reveal {
+  opacity: 0;
+  transform: perspective(900px) translate3d(0, 30px, -60px) rotateX(6deg);
+}
+
+.has-anim .reveal.is-inview {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.65s $ease var(--reveal-delay, 0ms),
+    transform 0.65s $ease var(--reveal-delay, 0ms);
+}
+
+// Hoverables need a snappier transform once revealed — JS clears
+// --reveal-delay after the entrance so hovers never inherit it.
+.has-anim .tile.reveal.is-inview,
+.has-anim .trend-card.reveal.is-inview,
+.has-anim .cat-tile.reveal.is-inview {
+  transition:
+    opacity 0.65s $ease var(--reveal-delay, 0ms),
+    transform 0.45s $ease var(--reveal-delay, 0ms),
+    box-shadow 0.45s $ease;
+}
+
+// ============================================================
+// 3. Depth / lift effects
+// ============================================================
+
+// -- Perspective on the grids so card tilts have real depth -----
+.featured-grid,
+.trending-row,
+.cat-row,
+.p-grid {
+  perspective: 1100px;
+}
+
+// Headroom for the card tilt: .p-rail is a scroll container, so a
+// lifted card would otherwise be clipped at the top edge.
+.p-rail {
+  perspective: 1100px;
+  padding-top: 10px;
+  margin-top: -10px;
+}
+
+// -- Tiles / cards lift off the page on hover -------------------
+.tile,
+.trend-card {
+  transition:
+    transform 0.45s $ease,
+    box-shadow 0.45s $ease;
+}
+
+.tile:hover,
+.tile.reveal.is-inview:hover,
+.trend-card:hover,
+.trend-card.reveal.is-inview:hover {
+  transform: translateY(-10px) rotateX(6deg);
+  box-shadow: 0 26px 40px -20px rgba(0, 0, 0, 0.5);
+}
+
+.cat-tile,
+.cat-tile.reveal.is-inview {
+  transition:
+    transform 0.4s $ease,
+    box-shadow 0.4s $ease;
+}
+
+.cat-tile:hover,
+.cat-tile.reveal.is-inview:hover {
+  transform: translateY(-8px) rotateX(5deg);
+}
+
+// -- Buttons: 3D hover lift + layered shadow --------------------
+// (overrides pill-button's plain scale(1.03) hover — _tokens.scss:148)
+.btn,
+.hero__btn,
+.tile__btn,
+.p-card__btn {
+  transform-style: preserve-3d;
+  transform-origin: center;
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.28s $ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn:not(:disabled):hover,
+.hero__btn:hover,
+.tile__btn:hover,
+.p-card__btn:not(:disabled):hover {
+  transform: translateY(-3px) rotateX(9deg) translateZ(6px);
+  box-shadow:
+    0 16px 24px -14px rgba(0, 0, 0, 0.55),
+    0 6px 12px -8px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+}
+
+.btn:not(:disabled):active,
+.hero__btn:active,
+.tile__btn:active,
+.p-card__btn:not(:disabled):active {
+  transform: translateY(-1px) rotateX(4deg) scale(0.97);
+  transition-duration: 0.1s;
+}

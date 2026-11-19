@@ -126,29 +126,61 @@ export function bindProductCardNavigation(): void {
   });
 
   // -- 3D Tilt Effect ------------------------------------------------
-  let tiltInitialized = false;
-  function initCardTilt(): void {
-    if (tiltInitialized) return;
-    tiltInitialized = true;
-
-    document.querySelectorAll<HTMLElement>(".p-card--tilt").forEach((card) => {
-      card.addEventListener("mousemove", (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -5; // max -5deg to +5deg
-        const rotateY = ((x - centerX) / centerX) * 5;
-
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-      });
-
-      card.addEventListener("mouseleave", () => {
-        card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)";
-      });
-    });
-  }
-
+  // Delegated on document: cards are injected long after this runs
+  // (home/shop rails render async), so per-card listeners at init
+  // would bind to nothing. ±8deg + lift, with a shadow that follows
+  // the pointer. Skipped for reduced-motion / touch pointers.
   initCardTilt();
+}
+
+let tiltBound = false;
+
+function initCardTilt(): void {
+  if (tiltBound) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  tiltBound = true;
+
+  let tilted: HTMLElement | null = null;
+
+  const reset = (card: HTMLElement): void => {
+    card.style.transform = "translateY(0) rotateX(0) rotateY(0) translateZ(0)";
+    card.style.boxShadow = "";
+  };
+
+  document.addEventListener("mousemove", (e) => {
+    const target =
+      e.target instanceof Element
+        ? e.target.closest<HTMLElement>(".p-card--tilt")
+        : null;
+
+    if (!target) {
+      if (tilted) {
+        reset(tilted);
+        tilted = null;
+      }
+      return;
+    }
+
+    if (tilted && tilted !== target) reset(tilted);
+    tilted = target;
+
+    const rect = target.getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 … 0.5
+    const ny = (e.clientY - rect.top) / rect.height - 0.5;
+
+    const rotateX = -ny * 16; // ±8deg
+    const rotateY = nx * 16;
+
+    // Inline transition beats the reveal transition from _3d.scss,
+    // keeping the tilt snappy after the card has revealed.
+    target.style.transition =
+      "transform 0.12s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.12s ease";
+    target.style.transform =
+      `translateY(-6px) translateZ(20px) ` +
+      `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+    // Shadow drifts opposite the pointer — light follows the cursor.
+    target.style.boxShadow =
+      `${(-nx * 26).toFixed(1)}px ${(10 - ny * 16).toFixed(1)}px 34px rgba(0, 0, 0, 0.22)`;
+  });
 }

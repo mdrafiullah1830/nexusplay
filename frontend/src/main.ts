@@ -14,6 +14,7 @@ import { initTrackPage } from "./pages/track";
 import { initAuthPages } from "./pages/auth";
 import { initAdminPage } from "./pages/admin";
 import { bindProductCardNavigation } from "./components/productCard";
+import { initAnimations } from "./components/animations";
 
 // -- Theme initialization --------------------------------------------
 function initTheme(): void {
@@ -47,6 +48,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavbar();
   initFooter();
   bindProductCardNavigation();
+  // Before the page switch so the reveal MutationObserver is alive
+  // when pages inject their dynamic content (cards, results, …).
+  initAnimations();
 
   const page = document.body.dataset.page;
 

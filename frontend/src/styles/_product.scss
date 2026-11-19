@@ -199,7 +199,9 @@
 // -- Staggered card entrance ---------------------------------------
 .p-card {
   opacity: 0;
-  animation: cardRise 0.5s $ease forwards;
+  // `backwards` only: the fill must NOT survive the animation, or it
+  // would override the html.has-anim reveal state from _3d.scss.
+  animation: cardRise 0.5s $ease backwards;
   animation-delay: var(--card-delay, 0s);
 }
 
