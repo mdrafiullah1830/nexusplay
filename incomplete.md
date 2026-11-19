@@ -22,7 +22,7 @@
 | `frontend/src/components/productCard.ts` | ✅ edited | Tilt ±8° + shadow follow, document-delegated (works for dynamic cards) |
 
 **Remaining:**
-- [ ] Visual check in Safari at `http://localhost:5173` (all pages: home, shop, product, cart, checkout, track, login, wishlist)
+- [x] Visual check in Safari at `http://localhost:5173` — ✅ confirmed by user (2026-11-20)
   - ⚠️ note: old note said port `5175`, actual vite port is **5173** (`vite.config.ts`)
 
 ---
