@@ -12,10 +12,93 @@ interface ArenaParticle {
   radius: number;
 }
 
+function initHeroProductViewer(media: HTMLElement): void {
+  const stage = media.querySelector<HTMLElement>(".hero__product-stage");
+  if (!stage || media.dataset.viewerReady === "true") return;
+  media.dataset.viewerReady = "true";
+
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+  let yaw = 0;
+  let pitch = 0;
+
+  const clamp = (value: number, min: number, max: number): number =>
+    Math.max(min, Math.min(max, value));
+
+  const applyRotation = (): void => {
+    stage.style.setProperty("--viewer-rotation-y", yaw.toFixed(2) + "deg");
+    stage.style.setProperty("--viewer-rotation-x", pitch.toFixed(2) + "deg");
+  };
+
+  const handlePointerDown = (event: PointerEvent): void => {
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    dragging = true;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    stage.classList.add("is-dragging");
+    try {
+      stage.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is a progressive enhancement.
+    }
+  };
+
+  const handlePointerMove = (event: PointerEvent): void => {
+    if (!dragging) return;
+    const deltaX = event.clientX - lastX;
+    const deltaY = event.clientY - lastY;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    yaw = clamp(yaw + deltaX * 0.32, -30, 30);
+    pitch = clamp(pitch - deltaY * 0.2, -14, 14);
+    applyRotation();
+  };
+
+  const handlePointerEnd = (event: PointerEvent): void => {
+    if (!dragging) return;
+    dragging = false;
+    stage.classList.remove("is-dragging");
+    if (stage.hasPointerCapture(event.pointerId)) {
+      try {
+        stage.releasePointerCapture(event.pointerId);
+      } catch {
+        // The browser may already have released the pointer.
+      }
+    }
+  };
+
+  stage.addEventListener("pointerdown", handlePointerDown);
+  stage.addEventListener("pointermove", handlePointerMove, { passive: true });
+  stage.addEventListener("pointerup", handlePointerEnd);
+  stage.addEventListener("pointercancel", handlePointerEnd);
+  stage.addEventListener("lostpointercapture", handlePointerEnd);
+  stage.addEventListener("dragstart", (event) => event.preventDefault());
+
+  media.querySelectorAll<HTMLButtonElement>("[data-viewer-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      switch (button.dataset.viewerAction) {
+        case "left":
+          yaw = clamp(yaw - 10, -30, 30);
+          break;
+        case "right":
+          yaw = clamp(yaw + 10, -30, 30);
+          break;
+        case "reset":
+          yaw = 0;
+          pitch = 0;
+          break;
+      }
+      applyRotation();
+    });
+  });
+}
+
 export function initHeroArena(): void {
   const media = document.querySelector<HTMLElement>(".hero__media");
   if (!media || media.dataset.arenaReady === "true") return;
   media.dataset.arenaReady = "true";
+  initHeroProductViewer(media);
 
   const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");

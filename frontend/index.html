@@ -40,7 +40,7 @@
               <span><i class="hero__status-light"></i> HARDWARE FEED / 01</span>
               <span>NX—001 / LIVE VIEW</span>
             </div>
-            <div class="hero__product-stage">
+            <div class="hero__product-stage" role="group" aria-label="Interactive tilt view. Drag to tilt the controller image.">
               <img
                 src="https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp"
                 alt="GameSir G7 Pro 8K Phantom Blade Zero Limited Edition controller"
@@ -48,7 +48,14 @@
                 height="900"
                 fetchpriority="high"
                 decoding="async"
+                draggable="false"
               />
+            </div>
+            <div class="hero__viewer-tools" role="group" aria-label="Product view controls">
+              <span>DRAG TO TILT</span>
+              <button type="button" data-viewer-action="left" aria-label="Tilt view left" title="Tilt view left">↶</button>
+              <button type="button" data-viewer-action="reset" aria-label="Reset view" title="Reset view">RESET</button>
+              <button type="button" data-viewer-action="right" aria-label="Tilt view right" title="Tilt view right">↷</button>
             </div>
             <div class="hero__hud-readout hero__hud-readout--left" aria-hidden="true">
               <span>SELECTED UNIT</span><strong>GS—G7P / 8K</strong><small>PHANTOM BLADE EDITION</small>
