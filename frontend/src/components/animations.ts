@@ -3,12 +3,16 @@
 //   * IntersectionObserver scroll reveal with batch stagger, plus
 //     a MutationObserver for dynamically injected content
 //   * hero mouse parallax tilt (CSS vars --rx / --ry on .hero)
+//   * Hero 3D mouse follow (Three.js)
 //
 // Pair file: styles/_3d.scss. The reveal hidden state there is
 // gated behind html.has-anim, which is only added below when
 // IntersectionObserver exists and reduced-motion is off — so the
 // page is never invisible without JS.
 // ============================================================
+
+import { initHeroSlider } from './heroSlider';
+import { initHero3D } from './hero3d';
 
 const REVEAL_SELECTOR = [
   ".section__head",
@@ -39,6 +43,8 @@ export function initAnimations(): void {
   document.documentElement.classList.add("has-anim");
   initScrollReveal();
   initHeroParallax();
+  initHeroSlider();
+  initHero3D();
 }
 
 // -- Scroll reveal ---------------------------------------------

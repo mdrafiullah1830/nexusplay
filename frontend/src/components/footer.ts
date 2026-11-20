@@ -15,7 +15,7 @@ export function initFooter(): void {
             Gaming controllers and accessories, delivered across Bangladesh. Honest prices, real after-sales
             support.
           </p>
-          <div class="footer__contact">
+          <div class="footer__contact" id="support">
             <a href="https://wa.me/8801782577251">WhatsApp: +880 1782577251</a>
             <a href="tel:+8801782577251">+880 1782577251</a>
             <a href="mailto:gamersgrip73@gmail.com">gamersgrip73@gmail.com</a>

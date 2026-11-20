@@ -1,0 +1,769 @@
+// ============================================================
+// NEXUSPLAY — Header extras
+// Search overlay, account menu, mini-cart, drawer groups,
+// announcement rotator, sticky shrink. Additive only.
+// ============================================================
+@use "tokens" as *;
+
+// -- Skip link -------------------------------------------------
+.skip-link {
+  position: fixed;
+  top: -80px;
+  left: 16px;
+  z-index: 400;
+  background: $ink;
+  color: $white;
+  padding: 10px 16px;
+  border-radius: $radius-sm;
+  font-size: $fs-sm;
+  font-weight: 700;
+  transition: top $speed $ease;
+
+  &:focus {
+    top: 12px;
+  }
+}
+
+#main-content,
+#support {
+  scroll-margin-top: 90px;
+}
+
+// Let the sticky navbar stick to the viewport: without this the
+// #navbar-root wrapper is only as tall as the header itself.
+#navbar-root {
+  display: contents;
+}
+
+// -- Sticky behaviour -----------------------------------------
+.navbar {
+  transition: transform 0.3s $ease, box-shadow 0.3s $ease;
+
+  &__inner {
+    transition: height 0.25s $ease;
+  }
+
+  &.is-scrolled {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  &.is-scrolled &__inner {
+    height: 52px;
+  }
+
+  &.is-hidden {
+    transform: translateY(-100%);
+  }
+}
+
+// -- Announcement rotator -------------------------------------
+.announce__rotator {
+  display: grid;
+  justify-items: center;
+}
+
+.announce__item {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s $ease, visibility 0.4s;
+  pointer-events: none;
+  text-align: center;
+
+  &.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  a {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+}
+
+// -- Nav pills ------------------------------------------------
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: $radius-pill;
+  background: $gray-200;
+  color: $gray-700;
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &--sale {
+    background: $danger;
+    color: $white;
+  }
+
+  &--new {
+    background: $accent;
+    color: $white;
+  }
+}
+
+// -- Account dropdown -----------------------------------------
+.account {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  &__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__name {
+    font-size: $fs-xs;
+    font-weight: 700;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -4px;
+    width: 236px;
+    padding: 6px;
+    background: $white;
+    border: 1px solid $gray-200;
+    border-radius: $radius-md;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity $speed $ease, transform $speed $ease, visibility $speed;
+    z-index: 30;
+  }
+
+  &.is-open &__menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid $gray-200;
+
+    small {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $gray-500;
+    }
+
+    strong {
+      font-size: $fs-sm;
+    }
+
+    span {
+      font-size: $fs-xs;
+      color: $gray-500;
+      word-break: break-all;
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 10px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    font: inherit;
+    font-size: $fs-sm;
+    font-weight: 600;
+    color: $ink;
+    text-align: left;
+    cursor: pointer;
+    transition: background $speed $ease;
+
+    &:hover {
+      background: $gray-100;
+    }
+
+    &--danger {
+      color: $danger;
+    }
+  }
+
+  &__sep {
+    height: 1px;
+    margin: 4px 0;
+    background: $gray-200;
+  }
+}
+
+// -- Mega menu polish -----------------------------------------
+.megamenu__col {
+  min-width: 0;
+}
+
+.megamenu__item {
+  .nav-pill {
+    margin-left: 8px;
+  }
+}
+
+.megamenu__promo {
+  .nav-pill {
+    align-self: flex-start;
+    margin: 0 0 10px;
+  }
+
+  &-text {
+    font-size: $fs-sm;
+    color: $gray-600;
+    margin-top: 4px;
+  }
+
+  &-cta {
+    align-self: flex-start;
+    margin-top: $space-md;
+    font-size: $fs-sm;
+    font-weight: 700;
+    color: $accent;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// -- Search overlay -------------------------------------------
+.search-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: $white;
+  border-bottom: 1px solid $gray-200;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity $speed $ease, transform $speed $ease, visibility $speed;
+
+  &.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  &__inner {
+    max-width: 780px;
+    margin-inline: auto;
+    padding: $space-lg clamp(1rem, 4vw, 3rem);
+  }
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 18px;
+    background: $gray-100;
+    border: 1px solid transparent;
+    border-radius: $radius-pill;
+    transition: background $speed $ease, border-color $speed $ease;
+
+    &:focus-within {
+      background: $white;
+      border-color: $gray-300;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font: inherit;
+      font-size: 1rem;
+      color: $ink;
+
+      &::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+      }
+    }
+  }
+
+  &__icon {
+    font-size: 1rem;
+    opacity: 0.7;
+  }
+
+  &__close {
+    border: none;
+    background: none;
+    padding: 2px 4px;
+    font-size: 1rem;
+    line-height: 1;
+    color: $gray-500;
+    cursor: pointer;
+
+    &:hover {
+      color: $ink;
+    }
+  }
+
+  &__section {
+    margin-top: $space-md;
+  }
+
+  &__title {
+    margin-bottom: $space-sm;
+    font-size: $fs-xs;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $gray-500;
+  }
+}
+
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  background: $gray-100;
+  border: 1px solid $gray-200;
+  border-radius: $radius-pill;
+  font: inherit;
+  font-size: $fs-sm;
+  font-weight: 600;
+  color: $ink;
+  cursor: pointer;
+  transition: background $speed $ease, border-color $speed $ease;
+
+  &:hover {
+    background: $gray-200;
+  }
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  margin-top: $space-md;
+}
+
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: $radius-md;
+  transition: background $speed $ease;
+
+  &.is-active,
+  &:hover {
+    background: $gray-100;
+  }
+
+  &__thumb {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-md;
+    font-size: 1.35rem;
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+
+    strong {
+      display: block;
+      font-size: $fs-sm;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    small {
+      display: block;
+      font-size: $fs-xs;
+      color: $gray-500;
+    }
+  }
+
+  &__price {
+    font-size: $fs-sm;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}
+
+.search-all {
+  display: inline-block;
+  margin-top: $space-md;
+  font-size: $fs-sm;
+  font-weight: 700;
+  color: $accent;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.search-empty {
+  padding: $space-xl 0;
+  text-align: center;
+  color: $gray-500;
+
+  span {
+    font-size: 1.75rem;
+  }
+
+  p {
+    margin-top: 6px;
+    font-size: $fs-sm;
+  }
+}
+
+// -- Mini cart -------------------------------------------------
+.minicart {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  visibility: hidden;
+
+  &.is-open {
+    visibility: visible;
+  }
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s $ease;
+  }
+
+  &.is-open &__backdrop {
+    opacity: 1;
+  }
+
+  &__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(420px, 100%);
+    background: $white;
+    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.32s $ease;
+  }
+
+  &.is-open &__panel {
+    transform: translateX(0);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-md;
+    padding: $space-lg;
+    border-bottom: 1px solid $gray-200;
+
+    h2 {
+      font-size: 1.15rem;
+    }
+  }
+
+  &__close {
+    border: none;
+    background: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: $space-lg;
+  }
+
+  &__foot {
+    padding: $space-lg;
+    border-top: 1px solid $gray-200;
+  }
+
+  &__progress {
+    margin-bottom: $space-md;
+  }
+
+  &__progress-text {
+    margin-bottom: 6px;
+    font-size: $fs-xs;
+    font-weight: 600;
+    color: $gray-600;
+  }
+
+  &__bar {
+    height: 6px;
+    background: $gray-200;
+    border-radius: $radius-pill;
+    overflow: hidden;
+
+    span {
+      display: block;
+      height: 100%;
+      background: $accent;
+      border-radius: inherit;
+      transition: width 0.3s $ease;
+    }
+  }
+
+  &__line {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid $gray-200;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__thumb {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: $radius-md;
+    background: $gray-100;
+    font-size: 1.5rem;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__brand {
+    font-size: $fs-xs;
+    font-weight: 700;
+    color: $gray-500;
+  }
+
+  &__name {
+    font-size: $fs-sm;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  &__meta {
+    font-size: $fs-xs;
+    color: $gray-500;
+  }
+
+  &__price {
+    margin-top: 4px;
+    font-size: $fs-sm;
+    font-weight: 800;
+  }
+
+  &__end {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  &__qty {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid $gray-300;
+    border-radius: $radius-pill;
+    overflow: hidden;
+
+    button {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+
+      &:hover {
+        background: $gray-100;
+      }
+    }
+
+    span {
+      min-width: 22px;
+      text-align: center;
+      font-size: $fs-xs;
+      font-weight: 700;
+    }
+  }
+
+  &__remove {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: $fs-xs;
+    color: $gray-500;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover {
+      color: $ink;
+    }
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    gap: $space-md;
+    margin-bottom: 8px;
+    font-size: $fs-sm;
+
+    &--total {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid $gray-200;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: $space-2xl 0;
+    text-align: center;
+
+    &-icon {
+      font-size: 3rem;
+    }
+
+    h3 {
+      font-size: $fs-h3;
+    }
+
+    p {
+      margin-bottom: $space-md;
+      font-size: $fs-sm;
+      color: $gray-600;
+    }
+  }
+}
+
+// -- Mobile drawer groups -------------------------------------
+.mobile-menu {
+  visibility: hidden;
+  transition: transform 0.3s $ease, visibility 0.3s;
+
+  &.is-open {
+    visibility: visible;
+  }
+
+  &__section {
+    padding: $space-md 0;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  &__title {
+    margin-bottom: $space-sm;
+    font-size: $fs-xs;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $gray-500;
+  }
+
+  &__sub {
+    display: block;
+    padding: 0.35rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  &__lang {
+    align-self: flex-start;
+    margin-top: $space-lg;
+    padding: 10px 20px;
+    background: $gray-100;
+    border: 1px solid $gray-200;
+    border-radius: $radius-pill;
+    font: inherit;
+    font-size: $fs-sm;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+// -- Body scroll locks ----------------------------------------
+body.drawer-open,
+body.minicart-open {
+  overflow: hidden;
+}
+
+// -- Responsive ------------------------------------------------
+@media (max-width: ($bp-lg - 0.02px)) {
+  .navbar__lang {
+    display: none;
+  }
+
+  .account__name {
+    display: none;
+  }
+
+  .search-panel__inner {
+    padding-block: $space-md;
+  }
+
+  .search-result__text strong {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .announce__item {
+    font-size: 0.6875rem;
+  }
+}

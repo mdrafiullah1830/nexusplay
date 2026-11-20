@@ -2,9 +2,15 @@
 // NEXUSPLAY — App entry point (multi-page router)
 // ============================================================
 import "./styles/main.scss";
+
+// Three.js CDN
+const script = document.createElement("script");
+script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+script.async = true;
+window.document.head.appendChild(script);
+
 import { initNavbar } from "./components/navbar";
 import { initFooter } from "./components/footer";
-import { initHeroSlider } from "./components/heroSlider";
 import { initHomePage } from "./pages/home";
 import { initShopPage } from "./pages/shop";
 import { initProductPage, initWishlistPage } from "./pages/product";
@@ -70,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   switch (page) {
     case "home":
-      initHeroSlider();
       initHomePage();
       break;
     case "shop":

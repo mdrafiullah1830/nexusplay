@@ -9,4 +9,5 @@
 @use "product";
 @use "sections";
 @use "pages";
+@use "header-extras";
 @use "3d" as *; // must stay last — overrides the partials above
