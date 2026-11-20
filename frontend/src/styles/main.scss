@@ -1,7 +1,9 @@
 // ============================================================
 // NEXUSPLAY — Main stylesheet entry
 // ============================================================
+@use "tokens";
 @use "base";
+@use "gradients";
 @use "navbar";
 @use "hero";
 @use "product";

@@ -1,0 +1,298 @@
+// ============================================================
+// NEXUSPLAY — Gradients, Glassmorphism & Animated Backgrounds
+// Senior-developer polish layer
+// ============================================================
+@use "tokens" as *;
+
+// ============================================================
+// 0. Gradient text utility
+// ============================================================
+.gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: $grad-aurora;
+}
+
+[data-theme="dark"] .gradient-text {
+  background-image: $grad-aurora;
+}
+
+// ============================================================
+// 1. Animated gradient mesh background (hero / section accents)
+// ============================================================
+.gradient-mesh {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    z-index: -1;
+    background: $grad-mesh;
+    background-size: 300% 300%;
+    animation: gradientMove 12s ease infinite;
+    filter: blur(60px);
+    opacity: 0.35;
+  }
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+// ============================================================
+// 2. Glassmorphism card / panel
+// ============================================================
+.glass {
+  background: rgba($white, 0.06);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba($white, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+}
+
+.glass--light {
+  background: rgba($ink, 0.04);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba($ink, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+}
+
+// ============================================================
+// 3. Gradient border (animated)
+// ============================================================
+.gradient-border {
+  position: relative;
+  border-radius: $radius-lg;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: $grad-gaming;
+    background-size: 200% 200%;
+    animation: gradientMove 4s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+// ============================================================
+// 4. Gradient button (animated shimmer on hover)
+// ============================================================
+.btn--gradient {
+  background: $grad-gaming;
+  color: $white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s $ease, box-shadow 0.2s $ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s $ease;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(142, 45, 226, 0.4);
+  }
+
+  &:hover::before {
+    transform: translateX(100%);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+  }
+}
+
+// ============================================================
+// 5. Shimmer loader (skeleton upgrade)
+// ============================================================
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    $gray-100 25%,
+    $gray-200 50%,
+    $gray-100 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ============================================================
+// 6. Floating animation (for decorative elements)
+// ============================================================
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float--slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+.float--fast {
+  animation: float 4s ease-in-out infinite;
+}
+
+// ============================================================
+// 7. Pulse glow (for CTAs / badges)
+// ============================================================
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(142, 45, 226, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(142, 45, 226, 0); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+// ============================================================
+// 8. Slide-in / fade-up entrance (stagger-ready)
+// ============================================================
+.reveal-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s $ease,
+    transform 0.7s $ease;
+}
+
+.reveal-up.is-inview {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+// ============================================================
+// 9. Scale-in button micro-interaction
+// ============================================================
+.scale-in {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+// ============================================================
+// 10. Gradient underline for links / section titles
+// ============================================================
+.gradient-underline {
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 0;
+    height: 3px;
+    background: $grad-gaming;
+    border-radius: 2px;
+    transition: width 0.35s $ease;
+  }
+
+  &:hover::after {
+    width: 100%;
+  }
+}
+
+// ============================================================
+// 11. Gradient badge / pill
+// ============================================================
+.badge-gradient {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: $radius-pill;
+  font-size: $fs-xs;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $white;
+  background: $grad-gaming;
+  box-shadow: 0 4px 12px rgba(142, 45, 226, 0.35);
+  transition: transform 0.2s $ease, box-shadow 0.2s $ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(142, 45, 226, 0.5);
+  }
+}
+
+// ============================================================
+// 12. Page transition overlay
+// ============================================================
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: $ink;
+  clip-path: circle(0% at 50% 50%);
+  transition: clip-path 0.6s $ease;
+  pointer-events: none;
+}
+
+.page-transition.is-active {
+  clip-path: circle(150% at 50% 50%);
+}
+
+// ============================================================
+// 13. Gradient divider (section separator)
+// ============================================================
+.gradient-divider {
+  height: 1px;
+  border: none;
+  margin: $space-xl 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    $gray-300 20%,
+    $gray-300 80%,
+    transparent 100%
+  );
+}
+
+.gradient-divider--colorful {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    $grad-gaming 20%,
+    $grad-gaming 80%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}

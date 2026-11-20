@@ -7,8 +7,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: $white;
-  border-bottom: 1px solid $gray-200;
+  background: rgba($white, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba($ink, 0.08);
 
   &__inner {
     @include container;
@@ -241,15 +243,18 @@
 
 // -- Announcement bar -----------------------------------------
 .announce {
-  background: $ink;
+  background: linear-gradient(90deg, $grad-gaming, $grad-aurora);
   color: $white;
   text-align: center;
   font-size: $fs-xs;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   padding: 0.5rem $space-md;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 
   span {
-    color: $accent;
+    color: #fff;
+    font-weight: 900;
   }
 }

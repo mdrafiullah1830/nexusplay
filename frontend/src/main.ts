@@ -42,9 +42,23 @@ function initPageEnter(): void {
   }, 500);
 }
 
+// -- Page transition overlay -----------------------------------------
+let transitionOverlay: HTMLElement | null = null;
+
+function initPageTransition(): void {
+  transitionOverlay = document.createElement("div");
+  transitionOverlay.className = "page-transition";
+  document.body.appendChild(transitionOverlay);
+}
+
+
+// (triggerPageTransition is wired up when navigation links are migrated)
+// Kept for future page-transition integration.
+
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initPageEnter();
+  initPageTransition();
   initNavbar();
   initFooter();
   bindProductCardNavigation();

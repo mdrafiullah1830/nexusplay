@@ -2,6 +2,7 @@
 // NEXUSPLAY — Hero Slider (Nike full-screen style)
 // ============================================================
 @use "tokens" as *;
+@use "gradients" as *;
 
 .hero {
   position: relative;
@@ -9,6 +10,19 @@
   min-height: 520px;
   overflow: hidden;
   background: $ink;
+
+  // Animated gradient mesh behind hero
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    z-index: 0;
+    background: $grad-mesh;
+    background-size: 300% 300%;
+    animation: gradientMove 12s ease infinite;
+    filter: blur(70px);
+    opacity: 0.3;
+  }
 
   &__slide {
     position: absolute;
@@ -59,6 +73,7 @@
     letter-spacing: 0.14em;
     color: $accent;
     margin-bottom: $space-sm;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
 
   &__title {
@@ -68,14 +83,17 @@
     font-size: $fs-hero;
     line-height: 0.92;
     letter-spacing: -0.03em;
+    @extend .gradient-text;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
   }
 
   &__sub {
     font-size: clamp(1rem, 1.6vw, 1.25rem);
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     margin-top: $space-md;
     max-width: 540px;
     font-weight: 400;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
 
   &__cta {
@@ -96,6 +114,18 @@
       &:hover {
         background: rgba(255, 255, 255, 0.12);
         opacity: 1;
+      }
+    }
+
+    // Primary hero CTA gets gradient treatment
+    &:not(&--ghost) {
+      background: $grad-gaming;
+      color: $white;
+      box-shadow: 0 8px 20px rgba(142, 45, 226, 0.35);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(142, 45, 226, 0.5);
       }
     }
   }

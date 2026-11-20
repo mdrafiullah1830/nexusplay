@@ -2,6 +2,7 @@
 // NEXUSPLAY — Home Sections
 // ============================================================
 @use "tokens" as *;
+@use "gradients" as *;
 
 .section {
   padding-block: $space-2xl;
@@ -22,6 +23,8 @@
   &__title {
     @include heading-display;
     font-size: $fs-h2;
+    @extend .gradient-text;
+    @extend .gradient-underline;
   }
 
   &__link {
@@ -69,6 +72,7 @@
   padding: $space-lg;
   color: $white;
   isolation: isolate;
+  @extend .float--slow;
 
   &__bg {
     position: absolute;
@@ -78,7 +82,11 @@
   }
 
   &:hover &__bg {
-    transform: scale(1.05);
+    transform: scale(1.08);
+  }
+
+  &:hover {
+    @extend .glass--light;
   }
 
   &__label {
@@ -143,6 +151,7 @@
   padding: $space-lg;
   color: $white;
   isolation: isolate;
+  @extend .float;
 
   &__bg {
     position: absolute;
@@ -152,7 +161,11 @@
   }
 
   &:hover &__bg {
-    transform: scale(1.06);
+    transform: scale(1.08);
+  }
+
+  &:hover {
+    @extend .glass--light;
   }
 
   &__title {
@@ -213,8 +226,12 @@
   }
 
   &:hover &__circle {
-    transform: translateY(-6px);
-    background: $accent;
+    transform: translateY(-8px);
+    background: $grad-gaming;
+  }
+
+  &:hover {
+    @extend .glass--light;
   }
 
   &__name {
