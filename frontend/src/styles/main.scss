@@ -11,4 +11,5 @@
 @use "pages";
 @use "header-extras";
 @use "animations-core"; // animation tokens, keyframes, utilities
+@use "signal"; // NexusPlay Signal / Precision homepage identity
 @use "3d" as *; // must stay last — overrides the partials above

@@ -19,6 +19,34 @@ const BRAND_TINT: Record<string, string> = {
   EasySMX: "linear-gradient(145deg, #3a2f4d, #150f1e)",
 };
 
+const REPOSITORY_ART_ROOT =
+  "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images";
+
+const LOCAL_PRODUCT_ART: Record<string, string> = {
+  "8bitdo-ultimate-2c": REPOSITORY_ART_ROOT + "/8BitDo_Ultimate_2c/01_angle.png",
+  "gamesir-g7-pro-8k-phantom-blade": REPOSITORY_ART_ROOT + "/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp",
+  "flydigi-apex-6-pro": REPOSITORY_ART_ROOT + "/Flydigi_Apex_6_Pro/01_angle.webp",
+  "flydigi-apex-6-pro-shadow-blade": REPOSITORY_ART_ROOT + "/Flydigi_Apex_6_Pro_Shadow_Blade_Zero_Limited_Edition/01_angle.webp",
+  "gamesir-cyclone-2": REPOSITORY_ART_ROOT + "/GameSir_Cyclone_2/01_angle.png",
+  "gamesir-g7-pro": REPOSITORY_ART_ROOT + "/GameSir_G7_pro/01_angle.png",
+  "gamesir-g7-pro-wuchang": REPOSITORY_ART_ROOT + "/GameSir_G7_pro_Wuchang_Limited_edition/01_angle.png",
+  "gamesir-g7-pro-8k-black": REPOSITORY_ART_ROOT + "/GameSir_G7_Pro_8k_PC_Black_Edition/01_angle.png",
+  "gamesir-g7-pro-8k-aimlabs": REPOSITORY_ART_ROOT + "/GameSir_G7_pro_8k_pc_Aimlabs_edition/01_angle.png",
+  "gamesir-tarantula-8k": REPOSITORY_ART_ROOT + "/GameSir_Tarantula_8k_pc/01_angle.png",
+  "flydigi-vader-5-pro": REPOSITORY_ART_ROOT + "/Flydigi_Vader_5_pro/01_angle.png",
+  "flydigi-apex-5": REPOSITORY_ART_ROOT + "/Flydigi_Apex_5/01_angle.png",
+  "dock-2-pro": REPOSITORY_ART_ROOT + "/Flydigi_Dock_2_Pro/01_angle.png",
+  "flydigi-bs2-pro": REPOSITORY_ART_ROOT + "/Flydigi_BS2_Pro/01_angle.png",
+  "flydigi-bs3-pro": REPOSITORY_ART_ROOT + "/Flydigi_BS3_Pro/01_angle.png",
+  "8bitdo-ultimate-2": REPOSITORY_ART_ROOT + "/8BitDo_Ultimate_2/01_angle.png",
+  "gamesir-nova-2-lite": REPOSITORY_ART_ROOT + "/GameSir_Nova_2_lite/01_angle.png",
+  "flydigi-vader-5-pro-with-dock": REPOSITORY_ART_ROOT + "/Flydigi_Vader_5_pro_with_Dock/01_angle.png",
+  "flydigi-apex-5-with-dock": REPOSITORY_ART_ROOT + "/Flydigi_Apex_5_With_Dock/01_angle.png",
+  "flydigi-direwolf-4": REPOSITORY_ART_ROOT + "/Flydigi_Direwolf_4/01_angle.png",
+  "easysmx-xo5-pro": REPOSITORY_ART_ROOT + "/EasySMX_XO5_Pro/01_angle.png",
+  "easysmx-d10": REPOSITORY_ART_ROOT + "/EasySMX_D10/01_angle.png",
+};
+
 /** Products rendered on the page, keyed by id (for card interactions). */
 const registry = new Map<string, Product>();
 
@@ -53,7 +81,7 @@ export function productCard(p: Product): string {
   const badge = badgeFor(p);
   const action = actionFor(p);
   const tint = BRAND_TINT[p.brand] ?? "linear-gradient(145deg, #2a2a2a, #0f0f0f)";
-  const firstImage = p.imageUrls?.[0];
+  const firstImage = p.imageUrls?.[0] || p.image || LOCAL_PRODUCT_ART[p.id];
 
   return `
     <article class="p-card reveal reveal--card" data-id="${p.id}" tabindex="0">

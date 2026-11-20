@@ -3,12 +3,6 @@
 // ============================================================
 import "./styles/main.scss";
 
-// Three.js CDN
-const script = document.createElement("script");
-script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
-script.async = true;
-window.document.head.appendChild(script);
-
 import { initNavbar } from "./components/navbar";
 import { initFooter } from "./components/footer";
 import { initHomePage } from "./pages/home";
@@ -98,8 +92,7 @@ async function initAnimationSystems(): Promise<void> {
   // 7. Auto-register shared elements from data attributes
   autoRegisterSharedElements();
   
-  // 8. Hero 3D effect (Three.js)
-  import('./components/hero3d').then(({ initHero3D }) => initHero3D());
+  // Homepage presentation uses lightweight CSS motion; avoid loading Three.js on every route.
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

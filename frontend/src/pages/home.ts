@@ -1,10 +1,13 @@
 // ============================================================
-// NEXUSPLAY — Home page rendering (API-first, local fallback)
+// NEXUSPLAY — Signal / Precision homepage
+// API-first catalogue with local fallback.
 // ============================================================
 import { products as localProducts } from "../data/products";
 import { productCard } from "../components/productCard";
 import { api } from "../services/api";
 import type { Product, PagedResult } from "../types";
+
+const REPO_IMAGE_ROOT = "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images";
 
 function renderInto(selector: string, html: string): void {
   const el = document.querySelector<HTMLElement>(selector);
@@ -16,92 +19,73 @@ async function loadProducts(): Promise<Product[]> {
     const res = await api.get<PagedResult<Product>>("/products?pageSize=100&sort=featured");
     return res.items.length > 0 ? res.items : localProducts;
   } catch {
-    return localProducts; // backend offline → static fallback so the page still works
+    return localProducts;
   }
 }
 
 export async function initHomePage(): Promise<void> {
-  // Featured tiles → 4 categories
-  const tiles = [
-    { label: "Controller Wall", sub: "22+ pro controllers", href: "/shop.html?category=controllers", bg: "g1" },
-    { label: "Pre-Order Now", sub: "Limited editions", href: "/shop.html?stock=pre-order", bg: "g2" },
-    { label: "Budget Picks", sub: "Under BDT 5,000", href: "/shop.html?max=5000", bg: "g3" },
-    { label: "Docks & Cooling", sub: "Gear up your setup", href: "/shop.html?category=other", bg: "g4" },
+  const collections = [
+    { number: "01", label: "Controller lineup", eyebrow: "PRECISION CONTROL", sub: "Find the feel that fits your game.", href: "/shop.html?category=controllers", image: REPO_IMAGE_ROOT + "/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp", alt: "GameSir G7 Pro 8K controller", tone: "tile--controller" },
+    { number: "02", label: "Pro performance", eyebrow: "BUILT TO COMPETE", sub: "Explore the Flydigi Apex range.", href: "/shop.html?brand=Flydigi", image: REPO_IMAGE_ROOT + "/Flydigi_Apex_6_Pro/01_angle.webp", alt: "Flydigi Apex 6 Pro controller", tone: "tile--performance" },
+    { number: "03", label: "Everyday favourites", eyebrow: "PLAY YOUR WAY", sub: "Smart picks for every setup.", href: "/shop.html?max=5000", image: REPO_IMAGE_ROOT + "/8BitDo_Ultimate_2c/01_angle.png", alt: "8BitDo Ultimate 2C controller", tone: "tile--everyday" },
+    { number: "04", label: "Setup essentials", eyebrow: "BEYOND THE CONTROLLER", sub: "Docks, cooling and more.", href: "/shop.html?category=other", image: REPO_IMAGE_ROOT + "/Flydigi_Dock_2_Pro/01_angle.png", alt: "Flydigi Dock 2 Pro accessory", tone: "tile--accessories" },
   ];
 
   renderInto(
     "#featured-grid",
-    tiles
-      .map(
-        (t) => `
-      <a class="tile reveal reveal--card" href="${t.href}">
-        <div class="tile__bg tile__bg--${t.bg}"></div>
-        <div class="tile__label">${t.label}</div>
-        <div class="tile__sub">${t.sub}</div>
-        <span class="tile__btn">Shop</span>
-      </a>`,
-      )
-      .join(""),
+    collections.map((item) =>
+      '<a class="tile reveal reveal--card ' + item.tone + '" href="' + item.href + '" aria-label="' + item.label + '">' +
+        '<div class="tile__bg"><img src="' + item.image + '" alt="' + item.alt + '" loading="lazy" decoding="async" /></div>' +
+        '<div class="tile__copy"><span class="tile__eyebrow">' + item.number + ' / ' + item.eyebrow + '</span>' +
+        '<span class="tile__label">' + item.label + '</span><span class="tile__sub">' + item.sub + '</span>' +
+        '<span class="tile__btn">Explore <span aria-hidden="true">↗</span></span></div></a>',
+    ).join(""),
   );
 
-  // Trending row
-  const trending = [
-    { title: "GameSir 8K", cta: "Shop now", bg: "t1", href: "/shop.html?brand=GameSir" },
-    { title: "Flydigi Apex", cta: "Shop now", bg: "t2", href: "/shop.html?brand=Flydigi" },
-    { title: "8BitDo", cta: "Shop now", bg: "t3", href: "/shop.html?brand=8BitDo" },
-    { title: "EasySMX", cta: "Shop now", bg: "t4", href: "/shop.html?brand=EasySMX" },
+  const brands = [
+    { name: "GameSir", href: "/shop.html?brand=GameSir", index: "01" },
+    { name: "Flydigi", href: "/shop.html?brand=Flydigi", index: "02" },
+    { name: "8BitDo", href: "/shop.html?brand=8BitDo", index: "03" },
+    { name: "EasySMX", href: "/shop.html?brand=EasySMX", index: "04" },
   ];
-
   renderInto(
-    "#trending-row",
-    trending
-      .map(
-        (t) => `
-      <a class="trend-card reveal reveal--card" href="${t.href}">
-        <div class="trend-card__bg trend-card__bg--${t.bg}"></div>
-        <div>
-          <div class="trend-card__title">${t.title}</div>
-          <div class="trend-card__cta">${t.cta}</div>
-        </div>
-      </a>`,
-      )
-      .join(""),
+    "#brand-row",
+    brands.map((brand) =>
+      '<a class="brand-row__item" href="' + brand.href + '">' +
+        '<span class="brand-row__index">' + brand.index + '</span><strong>' + brand.name + '</strong>' +
+        '<span class="brand-row__arrow" aria-hidden="true">↗</span></a>',
+    ).join(""),
   );
 
   const all = await loadProducts();
-
-  // Bestsellers — in stock first, then by rating
-  const rank = (s: string): number => (s === "in-stock" ? 0 : s === "pre-order" ? 1 : 2);
+  const stockRank = (stock: string): number => stock === "in-stock" ? 0 : stock === "pre-order" ? 1 : 2;
   const bestsellers = [...all]
-    .sort((a, b) => rank(a.stock) - rank(b.stock) || b.rating - a.rating)
+    .sort((a, b) => stockRank(a.stock) - stockRank(b.stock) || b.rating - a.rating)
     .slice(0, 10);
   renderInto("#bestseller-rail", bestsellers.map(productCard).join(""));
 
-  // Biggest savings — by discount amount
   const savings = [...all]
-    .sort((a, b) => b.oldPrice - b.price - (a.oldPrice - a.price))
+    .filter((product) => product.oldPrice > product.price)
+    .sort((a, b) => (b.oldPrice - b.price) - (a.oldPrice - a.price))
     .slice(0, 10);
   renderInto("#new-rail", savings.map(productCard).join(""));
 
-  // Category tiles
-  const cats = [
-    { name: "Controllers", emoji: "🎮", href: "/shop.html?category=controllers" },
-    { name: "Keyboards", emoji: "⌨️", href: "/shop.html?category=keyboards" },
-    { name: "Mice", emoji: "🖱️", href: "/shop.html?category=mice" },
-    { name: "Docks", emoji: "🔌", href: "/shop.html?category=other" },
-    { name: "Cooling", emoji: "❄️", href: "/shop.html?category=other" },
+  const categories = [
+    { name: "Controllers", detail: "Find your control", href: "/shop.html?category=controllers", image: REPO_IMAGE_ROOT + "/8BitDo_Ultimate_2c/01_angle.png", alt: "8BitDo controller", number: "01" },
+    { name: "Docks & charging", detail: "Power your setup", href: "/shop.html?q=dock", image: REPO_IMAGE_ROOT + "/Flydigi_Dock_2_Pro/01_angle.png", alt: "Flydigi controller charging dock", number: "02" },
+    { name: "Cooling gear", detail: "Keep your setup ready", href: "/shop.html?q=cooling", image: REPO_IMAGE_ROOT + "/Flydigi_BS2_Pro/01_angle.png", alt: "Flydigi BS2 Pro cooling pad", number: "03" },
   ];
-
   renderInto(
     "#cat-row",
-    cats
-      .map(
-        (c) => `
-      <a class="cat-tile reveal reveal--card" href="${c.href}">
-        <div class="cat-tile__circle">${c.emoji}</div>
-        <div class="cat-tile__name">${c.name}</div>
-      </a>`,
-      )
-      .join(""),
+    categories.map((category) =>
+      '<a class="cat-tile reveal reveal--card" href="' + category.href + '">' +
+        '<div class="cat-tile__circle"><img src="' + category.image + '" alt="' + category.alt + '" loading="lazy" decoding="async" /></div>' +
+        '<div class="cat-tile__meta"><span>' + category.number + ' / CATEGORY</span><strong>' + category.name + '</strong><small>' + category.detail + '</small></div>' +
+        '<span class="cat-tile__arrow" aria-hidden="true">↗</span></a>',
+    ).join("") +
+    '<a class="cat-tile cat-tile--all reveal reveal--card" href="/shop.html">' +
+      '<div class="cat-tile--all__mark" aria-hidden="true">N<span>↗</span></div>' +
+      '<div class="cat-tile__meta"><span>04 / THE FULL LINEUP</span><strong>All hardware</strong><small>Explore every product</small></div>' +
+      '<span class="cat-tile__arrow" aria-hidden="true">↗</span></a>',
   );
 }
