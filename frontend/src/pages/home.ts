@@ -6,6 +6,7 @@ import { products as localProducts } from "../data/products";
 import { productCard } from "../components/productCard";
 import { api } from "../services/api";
 import type { Product, PagedResult } from "../types";
+import { initHeroArena } from "../components/heroArena";
 
 const REPO_IMAGE_ROOT = "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images";
 
@@ -24,6 +25,7 @@ async function loadProducts(): Promise<Product[]> {
 }
 
 export async function initHomePage(): Promise<void> {
+  initHeroArena();
   const collections = [
     { number: "01", label: "Controller lineup", eyebrow: "PRECISION CONTROL", sub: "Find the feel that fits your game.", href: "/shop.html?category=controllers", image: REPO_IMAGE_ROOT + "/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp", alt: "GameSir G7 Pro 8K controller", tone: "tile--controller" },
     { number: "02", label: "Pro performance", eyebrow: "BUILT TO COMPETE", sub: "Explore the Flydigi Apex range.", href: "/shop.html?brand=Flydigi", image: REPO_IMAGE_ROOT + "/Flydigi_Apex_6_Pro/01_angle.webp", alt: "Flydigi Apex 6 Pro controller", tone: "tile--performance" },
