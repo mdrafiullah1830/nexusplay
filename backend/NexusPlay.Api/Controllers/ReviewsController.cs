@@ -67,7 +67,49 @@ public class ReviewsController : ControllerBase
         if (product is null)
             return NotFound(new { message = "Product not found" });
 
-        return Ok(new { averageRating = product.Rating, totalReviews = product.Reviews?.Count ?? 0 });
+        return Ok(new
+        {
+            averageRating = product.Rating,
+            totalReviews = product.Reviews?.Count ?? 0,
+            reviews = ParseReviews(product.Reviews),
+        });
+    }
+
+    /// <summary>
+    /// Reviews are stored as "User: comment (Rating: n)" strings on the
+    /// product document; this splits them back into structured entries so the
+    /// UI can render name / text / rating separately.
+    /// </summary>
+    private static object ParseReviews(List<string>? reviews)
+    {
+        if (reviews is null || reviews.Count == 0) return Array.Empty<object>();
+
+        return reviews.Select(r =>
+        {
+            var rating = 0;
+            var text = r;
+
+            var marker = r.LastIndexOf("(Rating: ", System.StringComparison.Ordinal);
+            if (marker >= 0 && r.EndsWith(")", System.StringComparison.Ordinal))
+            {
+                var raw = r[(marker + 9)..^1];
+                int.TryParse(raw, out rating);
+                text = r[..marker].Trim();
+            }
+
+            var sep = text.IndexOf(':');
+            if (sep > 0)
+            {
+                return (object)new
+                {
+                    userName = text[..sep].Trim(),
+                    comment = text[(sep + 1)..].Trim(),
+                    rating,
+                };
+            }
+
+            return (object)new { userName = "", comment = text, rating };
+        }).ToArray();
     }
 }
 

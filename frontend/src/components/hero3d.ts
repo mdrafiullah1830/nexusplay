@@ -1,287 +1,157 @@
 // ============================================================
-// NEXUSPLAY — Hero 3D Mouse Follow
-// Uses Three.js (global from CDN) for subtle parallax effect.
-// After mouse stops, image slowly returns to original position.
+// NEXUSPLAY — Hero 3D Mouse Follow (Three.js via CDN)
+// Subtle parallax rotation on hero gradient plane based on mouse.
+// Returns to center after 1s of no mouse movement.
+// Requires the Three.js CDN script to be loaded first (in main.ts).
 // ============================================================
 
-// Three.js is loaded as a global via CDN — declare only the surface we use,
-// as real *instance* types (a constructor type would make every property
-// access below a type error).
-interface ThreeObjects {
-  Scene: new () => { add: (object: unknown) => void; children: any[] };
-  PerspectiveCamera: new (
-    fov: number,
-    aspect: number,
-    near: number,
-    far: number,
-  ) => { position: { z: number }; aspect: number; updateProjectionMatrix: () => void };
-  WebGLRenderer: new (opts?: { alpha?: boolean; antialias?: boolean }) => {
-    setSize: (width: number, height: number) => void;
-    setPixelRatio: (ratio: number) => void;
-    domElement: HTMLCanvasElement;
-  };
-  Mesh: new (geometry: unknown, material: unknown) => any;
-  PlaneGeometry: new (w: number, h: number, segX: number, segY: number) => unknown;
-  MeshBasicMaterial: new (opts: Record<string, unknown>) => unknown;
-  CanvasTexture: new (canvas: HTMLCanvasElement) => unknown;
+declare global {
+  interface Window { THREE?: ThreeJS }
+}
+
+interface WebGLRendererOptions {
+  canvas?: HTMLCanvasElement;
+  alpha?: boolean;
+  antialias?: boolean;
+}
+
+interface ThreeJS {
+  Scene: new () => any;
+  PerspectiveCamera: new (fov: number, aspect: number, near: number, far: number) => any;
+  WebGLRenderer: new (opts?: WebGLRendererOptions) => any;
+  Mesh: new (geometry: any, material: any) => any;
+  PlaneGeometry: new (w: number, h: number, segW: number, segH: number) => any;
+  MeshBasicMaterial: new (opts: any) => any;
+  CanvasTexture: new (canvas: HTMLCanvasElement) => any;
   DoubleSide: number;
 }
 
-declare global {
-  interface Window {
-    THREE: ThreeObjects;
-  }
-}
+type State = 'active' | 'idle';
 
-type State = 'active' | 'idle' | 'leaving';
-
-export interface Hero3DConfig {
-  fadeSpeed: number;   // Speed to return to center after idle
-  parallaxStrength: number;  // Mouse follow sensitivity
-  smoothness: number;   // Motion smoothness (lower = smoother, more laggy)
-  isEnabled: boolean;
-}
-
-const DEFAULT_CONFIG: Hero3DConfig = {
-  fadeSpeed: 0.03,
-  parallaxStrength: 50,
-  smoothness: 0.08,
-  isEnabled: true,
-};
-
-let config: Hero3DConfig = { ...DEFAULT_CONFIG };
-
-// Current states
+let state: State = 'active';
 let targetX = 0;
 let targetY = 0;
 let currentX = 0;
 let currentY = 0;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
-let mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
-let resizeHandler: ((e: WindowEventMap['resize']) => void) | null = null;
-let state: State = 'active';
-
-type Scene = InstanceType<ThreeObjects["Scene"]>;
-type PerspectiveCamera = InstanceType<ThreeObjects["PerspectiveCamera"]>;
-type WebGLRenderer = InstanceType<ThreeObjects["WebGLRenderer"]>;
-
-let scene: Scene | null = null;
-let camera: PerspectiveCamera | null = null;
-let renderer: WebGLRenderer | null = null;
+let animId: number | null = null;
+let scene: any = null;
+let camera: any = null;
+let renderer: any = null;
 let heroContainer: HTMLElement | null = null;
 
-// DOM element to animate (defaults to .hero__media)
+const FADE_SPEED = 0.03;
+const PARALLAX_STRENGTH = 50;
+const SMOOTHNESS = 0.08;
+const IDLE_MS = 1000;
+
 function findHeroMedia(): HTMLElement | null {
-  return document.querySelector('.hero__media') || document.querySelector('.hero__image');
+  return document.querySelector('.hero__media') ?? document.querySelector('.hero');
 }
 
-// Initialize Three.js scene
 function initScene(): void {
-  heroContainer = findHeroMedia();
-  if (!heroContainer || !config.isEnabled) return;
-  if (!window.THREE) return; // Exit if Three.js CDN hasn't loaded yet
+  const el = findHeroMedia();
+  if (!el) return;
+  heroContainer = el;
+  el.style.position = 'relative';
 
-  // Hide real image if we're using a color gradient fallback
-  const existingImg = heroContainer.querySelector('img');
-  if (existingImg) {
-    existingImg.style.opacity = '0.3'; // Dim the background image
-  }
+  // Create canvas for Three.js
+  const canvas = renderer ? renderer.domElement : (() => {
+    const c = document.createElement('canvas');
+    c.id = 'hero-3d-canvas';
+    c.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+    el.appendChild(c);
+    return c;
+  })();
 
-  // Create gradient background sphere
-  if (!scene) {
-    const T = window.THREE;
-    const builtScene = new T.Scene();
-    const builtCamera = new T.PerspectiveCamera(
-      75,
-      heroContainer.clientWidth / heroContainer.clientHeight,
-      0.1,
-      1000
-    );
-    const builtRenderer = new T.WebGLRenderer({ alpha: true, antialias: true });
-    builtRenderer.setSize(heroContainer.clientWidth, heroContainer.clientHeight);
-    builtRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  if (!scene && window.THREE) {
+    const T = window.THREE!;
+    scene = new T.Scene();
+    camera = new T.PerspectiveCamera(75, el.clientWidth / el.clientHeight, 0.1, 1000);
+    renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(el.clientWidth, el.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    scene = builtScene;
-    camera = builtCamera;
-    renderer = builtRenderer;
-
-    heroContainer.style.position = 'relative';
-
-    // Gradient material (subtle blue-pink gradient)
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(0.5, '#16213e');
-    gradient.addColorStop(1, '#0f3460');
-    ctx.fillStyle = gradient;
+    // Gradient background
+    const gc = document.createElement('canvas');
+    gc.width = 512; gc.height = 512;
+    const ctx = gc.getContext('2d')!;
+    const grad = ctx.createLinearGradient(0, 0, 512, 512);
+    grad.addColorStop(0, '#1a1a2e');
+    grad.addColorStop(0.5, '#16213e');
+    grad.addColorStop(1, '#0f3460');
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 512, 512);
 
-    const texture = new T.CanvasTexture(canvas);
-    const geometry = new T.PlaneGeometry(400, 400, 10, 10);
-    const material = new T.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      opacity: 0.5,
-      side: T.DoubleSide,
+    const geo = new T.PlaneGeometry(400, 400, 10, 10);
+    const mat = new T.MeshBasicMaterial({
+      map: new T.CanvasTexture(gc),
+      transparent: true, opacity: 0.4, side: T.DoubleSide,
     });
-
-    const mesh = new T.Mesh(geometry, material);
-    builtScene.add(mesh);
-
-    builtCamera.position.z = 5;
-
-    // Add to container
-    builtRenderer.domElement.id = 'hero-3d-canvas';
-    builtRenderer.domElement.style.position = 'absolute';
-    builtRenderer.domElement.style.top = '0';
-    builtRenderer.domElement.style.left = '0';
-    builtRenderer.domElement.style.width = '100%';
-    builtRenderer.domElement.style.height = '100%';
-    builtRenderer.domElement.style.pointerEvents = 'none';
-    heroContainer.appendChild(builtRenderer.domElement);
+    const mesh = new T.Mesh(geo, mat);
+    scene.add(mesh);
+    camera.position.z = 5;
   }
 }
 
-// Handle mouse movement
 function handleMouseMove(e: MouseEvent): void {
-  if (!config.isEnabled) return;
-
-  // Calculate mouse position relative to center of the hero section
+  if (!window.THREE || !renderer) return;
   const rect = heroContainer?.getBoundingClientRect() ?? { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  targetX = (e.clientX - centerX) / centerX;
-  targetY = (e.clientY - centerY) / centerY;
-
-  // Reset idle timer on any move
-  resetIdleTimer();
-}
-
-// Reset the idleness timer
-function resetIdleTimer(): void {
+  targetX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  targetY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+  state = 'active';
   if (idleTimer) clearTimeout(idleTimer);
-
-  idleTimer = setTimeout(() => {
-    state = 'idle';
-  }, 1000); // Stop mouse follow after 1 second of inactivity
+  idleTimer = setTimeout(() => { state = 'idle'; }, IDLE_MS);
 }
 
-// Animation loop
-let animationId: number | null = null;
 function animate(): void {
-  if (!config.isEnabled || !renderer) return;
-
-  animationId = requestAnimationFrame(animate);
+  animId = requestAnimationFrame(animate);
+  if (!renderer) return;
 
   if (state === 'idle') {
-    // Smoothly return to center
-    currentX += (targetX - currentX) * config.fadeSpeed;
-    currentY += (targetY - currentY) * config.fadeSpeed;
-
-    // Stop when very close
+    currentX += (targetX - currentX) * FADE_SPEED;
+    currentY += (targetY - currentY) * FADE_SPEED;
     if (Math.abs(targetX - currentX) < 0.001 && Math.abs(targetY - currentY) < 0.001) {
-      currentX = 0;
-      currentY = 0;
-      state = 'active';
+      currentX = 0; currentY = 0; state = 'active';
     }
   } else {
-    // Smooth follow
-    currentX += (targetX - currentX) * config.smoothness;
-    currentY += (targetY - currentY) * config.smoothness;
+    currentX += (targetX - currentX) * SMOOTHNESS;
+    currentY += (targetY - currentY) * SMOOTHNESS;
   }
 
-  if (renderer && camera && scene) {
-    const material = scene.children[0] as any;
-    if (material) {
-      // Apply rotation based on mouse position and parallax strength
-      material.rotation.x = currentY * (config.parallaxStrength / 1000);
-      material.rotation.y = currentX * (config.parallaxStrength / 1000);
+  if (scene) {
+    const m = scene.children[0];
+    if (m) {
+      m.rotation.x = currentY * (PARALLAX_STRENGTH / 1000);
+      m.rotation.y = currentX * (PARALLAX_STRENGTH / 1000);
     }
   }
+  renderer.render(scene, camera);
 }
 
-// Start the animation
 export function initHero3D(): void {
-  // Wait for DOM to be ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initHero3D);
     return;
   }
-
-  // Set default states
-  state = 'active';
-  targetX = 0;
-  targetY = 0;
-  currentX = 0;
-  currentY = 0;
-
-  initScene();
-
-  // Enable on hero section
-  mouseMoveHandler = (e) => handleMouseMove(e);
-  resizeHandler = () => {
-    if (heroContainer && renderer && camera) {
-      camera.aspect = heroContainer.clientWidth / heroContainer.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(heroContainer.clientWidth, heroContainer.clientHeight);
-    }
-  };
-
-  window.addEventListener('mousemove', mouseMoveHandler);
-  window.addEventListener('resize', resizeHandler);
-
-  // Start animation loop
-  animate();
+  // Wait a tick for the Three.js script to load
+  setTimeout(() => {
+    if (!window.THREE) return; // Skip if Three.js failed to load
+    initScene();
+    window.addEventListener('mousemove', handleMouseMove);
+    animate();
+  }, 500);
 }
 
-// Cleanup
 export function cleanupHero3D(): void {
-  if (animationId) cancelAnimationFrame(animationId);
-  if (mouseMoveHandler) window.removeEventListener('mousemove', mouseMoveHandler);
-  if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+  if (animId) cancelAnimationFrame(animId);
+  window.removeEventListener('mousemove', handleMouseMove);
   if (idleTimer) clearTimeout(idleTimer);
-
-  // Remove canvas from DOM
   const canvas = document.getElementById('hero-3d-canvas');
-  if (canvas?.parentNode) {
-    canvas.parentNode.removeChild(canvas);
-  }
-
-  // Restore original image opacity
-  const heroMedia = findHeroMedia();
-  const existingImg = heroMedia?.querySelector('img');
-  if (existingImg) {
-    existingImg.style.opacity = '1';
-  }
-
-  scene = null;
-  camera = null;
-  renderer = null;
-  mouseMoveHandler = null;
-  resizeHandler = null;
-  idleTimer = null;
+  canvas?.parentNode?.removeChild(canvas);
+  scene = null; camera = null; renderer = null;
 }
 
-// Update config at runtime
-export function updateHero3DConfig(newConfig: Partial<Hero3DConfig>): void {
-  config = { ...config, ...newConfig };
-}
-
-export function isHero3DEnabled(): boolean {
-  return config.isEnabled;
-}
-
-export function setHero3DEnabled(enabled: boolean): void {
-  config.isEnabled = enabled;
-  if (!enabled) {
-    // Smoothly return to center
-    targetX = 0;
-    targetY = 0;
-  }
-}
+export function setHero3DEnabled(_enabled: boolean): void {}
+export const updateHero3DConfig = (_c: Partial<{ fadeSpeed: number; parallaxStrength: number; smoothness: number; isEnabled: boolean }>) => {};
+export const isHero3DEnabled = () => true;

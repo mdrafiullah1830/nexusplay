@@ -16,6 +16,7 @@ public class MongoContext
     public IMongoCollection<Product> Products => Db.GetCollection<Product>("products");
     public IMongoCollection<Order> Orders => Db.GetCollection<Order>("orders");
     public IMongoCollection<AppUser> Users => Db.GetCollection<AppUser>("users");
+    public IMongoCollection<WishlistItem> Wishlists => Db.GetCollection<WishlistItem>("wishlists");
 
     /// <summary>Creates indexes required by the app (idempotent).</summary>
     public async Task EnsureIndexesAsync(CancellationToken ct = default)
@@ -36,6 +37,16 @@ public class MongoContext
             new CreateIndexModel<AppUser>(
                 Builders<AppUser>.IndexKeys.Ascending(u => u.Email),
                 new CreateIndexOptions { Unique = true, Name = "ux_email" }),
+            cancellationToken: ct);
+
+        // One saved product per user — the unique index is also what makes
+        // POST /api/wishlist idempotent at the database level.
+        await Wishlists.Indexes.CreateOneAsync(
+            new CreateIndexModel<WishlistItem>(
+                Builders<WishlistItem>.IndexKeys
+                    .Ascending(w => w.UserId)
+                    .Ascending(w => w.ProductId),
+                new CreateIndexOptions { Unique = true, Name = "ux_user_product" }),
             cancellationToken: ct);
     }
 }

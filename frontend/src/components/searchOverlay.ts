@@ -3,9 +3,13 @@
 // Instant client-side search over the static catalogue.
 // ============================================================
 import { products } from "../data/products";
-import type { Product } from "../types";
+import type { PagedResult, Product } from "../types";
 import { formatBDT } from "../services/cart";
 import { t } from "../services/i18n";
+import { api } from "../services/api";
+
+/** Debounce window for live search — long enough to avoid a request per keystroke. */
+const SEARCH_DEBOUNCE_MS = 220;
 
 const RECENT_KEY = "nexusplay_recent_searches";
 const MAX_RECENT = 5;
@@ -124,6 +128,8 @@ export function initSearch(signal: AbortSignal): SearchApi {
   if (!panel || !button || !input || !results || !closeButton) return noop;
 
   let activeIndex = -1;
+  let queryToken = 0;
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   const rows = (): HTMLElement[] => Array.from(results.querySelectorAll<HTMLElement>(".search-result"));
 
@@ -179,14 +185,39 @@ export function initSearch(signal: AbortSignal): SearchApi {
     clearActive();
   };
 
-  const renderQuery = (raw: string): void => {
+  const renderQuery = async (raw: string): Promise<void> => {
     const q = raw.trim();
     if (!q) {
       renderIdle();
       return;
     }
 
-    const matches = searchCatalogue(q);
+    // Token guard: only the newest query may paint, so a slow response for an
+    // earlier keystroke can't overwrite newer results.
+    const token = ++queryToken;
+
+    results.innerHTML = `<div class="search-empty">
+      <span>🔎</span>
+      <p>${t("search.searching")}</p>
+    </div>`;
+    results.setAttribute("role", "presentation");
+    input.setAttribute("aria-expanded", "false");
+    clearActive();
+
+    let matches: Product[] = [];
+    try {
+      const res = await api.get<PagedResult<Product>>(
+        `/products?q=${encodeURIComponent(q)}&pageSize=${MAX_RESULTS}&sort=featured`,
+      );
+      if (token === queryToken) matches = res.items.slice(0, MAX_RESULTS);
+    } catch {
+      // API offline / rate limited → fall back to the bundled catalogue
+    }
+
+    if (token !== queryToken) return;
+
+    if (matches.length === 0) matches = searchCatalogue(q);
+
     if (matches.length === 0) {
       results.innerHTML = `<div class="search-empty">
         <span>🔎</span>
@@ -215,7 +246,7 @@ export function initSearch(signal: AbortSignal): SearchApi {
     button.setAttribute("aria-expanded", "true");
     input.focus();
     input.select();
-    if (input.value.trim()) renderQuery(input.value);
+    if (input.value.trim()) void renderQuery(input.value);
     else renderIdle();
   };
 
@@ -237,7 +268,11 @@ export function initSearch(signal: AbortSignal): SearchApi {
   button.addEventListener("click", open, { signal });
   closeButton.addEventListener("click", () => close(true), { signal });
 
-  input.addEventListener("input", () => renderQuery(input.value), { signal });
+  input.addEventListener("input", () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    const value = input.value;
+    searchTimer = setTimeout(() => void renderQuery(value), SEARCH_DEBOUNCE_MS);
+  }, { signal });
 
   input.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown") {
@@ -267,7 +302,7 @@ export function initSearch(signal: AbortSignal): SearchApi {
     const queryChip = target.closest<HTMLButtonElement>("[data-search-q]");
     if (queryChip) {
       input.value = queryChip.dataset.searchQ ?? "";
-      renderQuery(input.value);
+      void renderQuery(input.value);
       input.focus();
       return;
     }

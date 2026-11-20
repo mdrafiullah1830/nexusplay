@@ -102,6 +102,7 @@ builder.Services.AddSingleton(new MongoContext(mongoConn, mongoDb));
 builder.Services.AddSingleton<IProductRepository, ProductRepository>();
 builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IWishlistRepository, WishlistRepository>();
 
 // -- CORS -------------------------------------------------------
 var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()

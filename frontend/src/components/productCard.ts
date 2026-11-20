@@ -56,7 +56,7 @@ export function productCard(p: Product): string {
   const firstImage = p.imageUrls?.[0];
 
   return `
-    <article class="p-card p-card--tilt" data-id="${p.id}" tabindex="0">
+    <article class="p-card reveal reveal--card" data-id="${p.id}" tabindex="0">
       <div class="p-card__media">
         ${badge ? `<span class="p-card__badge ${badge.cls}">${badge.text}</span>` : ""}
         <div class="p-card__img" style="background:${tint};">
@@ -71,7 +71,7 @@ export function productCard(p: Product): string {
         <div class="p-card__meta">${metaFor(p)}</div>
         <div class="p-card__price">
           <strong>${formatBDT(p.price)}</strong>
-          <s>${formatBDT(p.oldPrice)}</s>
+          ${p.oldPrice > p.price ? `<del>${formatBDT(p.oldPrice)}</del>` : ""}
         </div>
         <div class="p-card__actions">
           <button class="p-card__btn ${action.disabled ? "p-card__btn--disabled" : ""}"
@@ -123,64 +123,5 @@ export function bindProductCardNavigation(): void {
     if (card && (e.target as HTMLElement).classList.contains("p-card")) {
       window.location.href = `/product.html?id=${encodeURIComponent(card.dataset.id ?? "")}`;
     }
-  });
-
-  // -- 3D Tilt Effect ------------------------------------------------
-  // Delegated on document: cards are injected long after this runs
-  // (home/shop rails render async), so per-card listeners at init
-  // would bind to nothing. ±8deg + lift, with a shadow that follows
-  // the pointer. Skipped for reduced-motion / touch pointers.
-  initCardTilt();
-}
-
-let tiltBound = false;
-
-function initCardTilt(): void {
-  if (tiltBound) return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-  tiltBound = true;
-
-  let tilted: HTMLElement | null = null;
-
-  const reset = (card: HTMLElement): void => {
-    card.style.transform = "translateY(0) rotateX(0) rotateY(0) translateZ(0)";
-    card.style.boxShadow = "";
-  };
-
-  document.addEventListener("mousemove", (e) => {
-    const target =
-      e.target instanceof Element
-        ? e.target.closest<HTMLElement>(".p-card--tilt")
-        : null;
-
-    if (!target) {
-      if (tilted) {
-        reset(tilted);
-        tilted = null;
-      }
-      return;
-    }
-
-    if (tilted && tilted !== target) reset(tilted);
-    tilted = target;
-
-    const rect = target.getBoundingClientRect();
-    const nx = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 … 0.5
-    const ny = (e.clientY - rect.top) / rect.height - 0.5;
-
-    const rotateX = -ny * 16; // ±8deg
-    const rotateY = nx * 16;
-
-    // Inline transition beats the reveal transition from _3d.scss,
-    // keeping the tilt snappy after the card has revealed.
-    target.style.transition =
-      "transform 0.12s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.12s ease";
-    target.style.transform =
-      `translateY(-6px) translateZ(20px) ` +
-      `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
-    // Shadow drifts opposite the pointer — light follows the cursor.
-    target.style.boxShadow =
-      `${(-nx * 26).toFixed(1)}px ${(10 - ny * 16).toFixed(1)}px 34px rgba(0, 0, 0, 0.22)`;
   });
 }

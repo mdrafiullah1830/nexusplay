@@ -78,6 +78,7 @@ const DICT: Record<string, Entry> = {
   "search.recent": { en: "Recent searches", bn: "সাম্প্রতিক সার্চ" },
   "search.popular": { en: "Popular", bn: "জনপ্রিয়" },
   "search.empty": { en: "No products found", bn: "কোনো প্রোডাক্ট পাওয়া যায়নি" },
+  "search.searching": { en: "Searching…", bn: "খোঁজা হচ্ছে…" },
   "search.viewall": { en: "View all results", bn: "সব ফলাফল দেখুন" },
   "search.clear": { en: "Clear search", bn: "সার্চ মুছুন" },
   "search.label": { en: "Search products", bn: "প্রোডাক্ট খুঁজুন" },

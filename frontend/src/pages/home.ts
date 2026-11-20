@@ -34,7 +34,7 @@ export async function initHomePage(): Promise<void> {
     tiles
       .map(
         (t) => `
-      <a class="tile" href="${t.href}">
+      <a class="tile reveal reveal--card" href="${t.href}">
         <div class="tile__bg tile__bg--${t.bg}"></div>
         <div class="tile__label">${t.label}</div>
         <div class="tile__sub">${t.sub}</div>
@@ -57,7 +57,7 @@ export async function initHomePage(): Promise<void> {
     trending
       .map(
         (t) => `
-      <a class="trend-card" href="${t.href}">
+      <a class="trend-card reveal reveal--card" href="${t.href}">
         <div class="trend-card__bg trend-card__bg--${t.bg}"></div>
         <div>
           <div class="trend-card__title">${t.title}</div>
@@ -97,7 +97,7 @@ export async function initHomePage(): Promise<void> {
     cats
       .map(
         (c) => `
-      <a class="cat-tile" href="${c.href}">
+      <a class="cat-tile reveal reveal--card" href="${c.href}">
         <div class="cat-tile__circle">${c.emoji}</div>
         <div class="cat-tile__name">${c.name}</div>
       </a>`,

@@ -1,0 +1,621 @@
+// ============================================================
+// NEXUSPLAY — Animation CSS Variables & Core Keyframes
+// Import this in main.scss to register all animation tokens
+// ============================================================
+@use "tokens" as *;
+
+// Generate CSS custom properties from JS tokens
+// These mirror the values in animations/core/easings.ts
+:root {
+  // ===== EASINGS =====
+  // Heroic, expressive (Apple/Nike)
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo-strong: cubic-bezier(0.1, 1, 0.2, 1);
+  
+  // Spring-like, lively (Framer/Linear)
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-spring-gentle: cubic-bezier(0.25, 0.8, 0.4, 1);
+  --ease-spring-sharp: cubic-bezier(0.15, 0.85, 0.35, 1);
+  
+  // Sharp, decisive (Stripe/Vercel)
+  --ease-sharp: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-sharp-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-sharp-exit: cubic-bezier(0.4, 0, 1, 1);
+  
+  // Standard
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+  
+  // Specialized
+  --ease-bounce-subtle: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-elastic-gentle: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  // Linear
+  --ease-linear: linear;
+
+  // ===== DURATIONS =====
+  --dur-instant: 80ms;
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-smooth: 400ms;
+  --dur-heroic: 800ms;
+  --dur-epic: 1200ms;
+
+  // ===== PERSPECTIVE DEPTHS =====
+  --perspective-shallow: 600px;
+  --perspective-medium: 1100px;
+  --perspective-deep: 1500px;
+  --perspective-hero: 2000px;
+
+  // ===== STAGGER DELAYS =====
+  --stagger-tight: 40ms;
+  --stagger-base: 60ms;
+  --stagger-relaxed: 80ms;
+  --stagger-heroic: 100ms;
+
+  // ===== Z-INDEX LAYERS =====
+  --z-bg: -1;
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-popover: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  --z-transition: 9999;
+
+  // ===== SHADOWS (3D-aware) =====
+  --shadow-lift-sm: 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+  --shadow-lift-md: 0 12px 24px -12px rgba(0, 0, 0, 0.4);
+  --shadow-lift-lg: 0 24px 48px -24px rgba(0, 0, 0, 0.5);
+  --shadow-glow-sm: 0 0 16px -4px rgba(142, 45, 226, 0.3);
+  --shadow-glow-md: 0 0 32px -8px rgba(142, 45, 226, 0.4);
+  --shadow-glow-lg: 0 0 64px -16px rgba(142, 45, 226, 0.5);
+
+  // ===== TRANSFORM ORIGINS =====
+  --origin-center: center center;
+  --origin-top: center top;
+  --origin-bottom: center bottom;
+  --origin-left: left center;
+  --origin-right: right center;
+}
+
+// ============================================================
+// REDUCED MOTION — CSS Opt-Out (mirrors JS reduced-motion.ts)
+// ============================================================
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  // Disable will-change promotions
+  .will-animate {
+    will-change: auto !important;
+  }
+}
+
+// ============================================================
+// BASE ANIMATION UTILITIES
+// ============================================================
+
+// Hardware acceleration helper
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+// Will-change management
+.will-animate-transform {
+  will-change: transform;
+}
+
+.will-animate-opacity {
+  will-change: opacity;
+}
+
+.will-animate-transform-opacity {
+  will-change: transform, opacity;
+}
+
+// Remove will-change after animation
+@keyframes clear-will-change {
+  to { will-change: auto; }
+}
+
+.clear-will-change {
+  animation: clear-will-change 0s forwards;
+  animation-delay: var(--dur-smooth);
+}
+
+// ============================================================
+// KEYFRAMES — Reusable building blocks
+// ============================================================
+
+// Fade + translate entrance
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-20px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in-right {
+  from {
+    opacity: 0;
+    transform: translate3d(20px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// 3D perspective entrances
+@keyframes reveal-3d-up {
+  from {
+    opacity: 0;
+    transform: perspective(var(--perspective-medium)) 
+      translate3d(0, 40px, -80px) rotateX(12deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal-3d-down {
+  from {
+    opacity: 0;
+    transform: perspective(var(--perspective-medium)) 
+      translate3d(0, -40px, -80px) rotateX(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal-3d-flip-y {
+  from {
+    opacity: 0;
+    transform: perspective(var(--perspective-medium)) 
+      rotateY(-90deg) translateZ(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal-3d-flip-x {
+  from {
+    opacity: 0;
+    transform: perspective(var(--perspective-medium)) 
+      rotateX(90deg) translateZ(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Scale entrances
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes scale-in-spring {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Slide entrances (for rails, lists)
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translate3d(40px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translate3d(-40px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Button press
+@keyframes press-down {
+  from { transform: none; }
+  to { transform: translateY(1px) scale(0.97); }
+}
+
+// Pulse (for badges, notifications)
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--shadow-glow-sm); }
+  50% { box-shadow: var(--shadow-glow-md); }
+}
+
+// Shimmer (for skeletons)
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// Rotate (for loading)
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// Wobble (for error shake)
+@keyframes wobble {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+
+// ============================================================
+// UTILITY ANIMATION CLASSES
+// ============================================================
+
+// Entrance animations (apply directly or via JS)
+.animate-fade-in-up {
+  animation: fade-in-up var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+.animate-fade-in-left {
+  animation: fade-in-left var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+.animate-fade-in-right {
+  animation: fade-in-right var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+.animate-reveal-3d-up {
+  animation: reveal-3d-up var(--dur-heroic) var(--ease-out-expo) forwards;
+}
+
+.animate-reveal-3d-down {
+  animation: reveal-3d-down var(--dur-heroic) var(--ease-out-expo) forwards;
+}
+
+.animate-reveal-3d-flip-y {
+  animation: reveal-3d-flip-y var(--dur-heroic) var(--ease-out-expo) forwards;
+}
+
+.animate-reveal-3d-flip-x {
+  animation: reveal-3d-flip-x var(--dur-heroic) var(--ease-out-expo) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--dur-base) var(--ease-spring) forwards;
+}
+
+.animate-scale-in-spring {
+  animation: scale-in-spring var(--dur-smooth) var(--ease-bounce-subtle) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left var(--dur-smooth) var(--ease-spring) forwards;
+}
+
+// Stagger delays (apply to children)
+.stagger-1 { animation-delay: calc(1 * var(--stagger-base)); }
+.stagger-2 { animation-delay: calc(2 * var(--stagger-base)); }
+.stagger-3 { animation-delay: calc(3 * var(--stagger-base)); }
+.stagger-4 { animation-delay: calc(4 * var(--stagger-base)); }
+.stagger-5 { animation-delay: calc(5 * var(--stagger-base)); }
+.stagger-6 { animation-delay: calc(6 * var(--stagger-base)); }
+.stagger-7 { animation-delay: calc(7 * var(--stagger-base)); }
+.stagger-8 { animation-delay: calc(8 * var(--stagger-base)); }
+
+// Tight stagger
+.stagger-tight-1 { animation-delay: calc(1 * var(--stagger-tight)); }
+.stagger-tight-2 { animation-delay: calc(2 * var(--stagger-tight)); }
+.stagger-tight-3 { animation-delay: calc(3 * var(--stagger-tight)); }
+.stagger-tight-4 { animation-delay: calc(4 * var(--stagger-tight)); }
+.stagger-tight-5 { animation-delay: calc(5 * var(--stagger-tight)); }
+.stagger-tight-6 { animation-delay: calc(6 * var(--stagger-tight)); }
+
+// Heroic stagger
+.stagger-heroic-1 { animation-delay: calc(1 * var(--stagger-heroic)); }
+.stagger-heroic-2 { animation-delay: calc(2 * var(--stagger-heroic)); }
+.stagger-heroic-3 { animation-delay: calc(3 * var(--stagger-heroic)); }
+.stagger-heroic-4 { animation-delay: calc(4 * var(--stagger-heroic)); }
+.stagger-heroic-5 { animation-delay: calc(5 * var(--stagger-heroic)); }
+.stagger-heroic-6 { animation-delay: calc(6 * var(--stagger-heroic)); }
+
+// Interaction states
+.animate-press {
+  animation: press-down var(--dur-instant) var(--ease-sharp) forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s var(--ease-in-out) infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.15) 50%,
+    rgba(255,255,255,0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s var(--ease-linear) infinite;
+}
+
+.animate-rotate {
+  animation: rotate 1s var(--ease-linear) infinite;
+}
+
+.animate-wobble {
+  animation: wobble 0.6s var(--ease-spring) forwards;
+}
+
+// ============================================================
+// HOVER/TAP 3D INTERACTIONS (CSS-only fallbacks)
+// ============================================================
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive-3d {
+    transition: 
+      transform var(--dur-smooth) var(--ease-spring),
+      box-shadow var(--dur-smooth) var(--ease-spring);
+    transform-style: preserve-3d;
+  }
+  
+  .interactive-3d:hover {
+    transform: translateY(-4px) rotateX(6deg) translateZ(8px);
+    box-shadow: var(--shadow-lift-lg);
+  }
+  
+  .interactive-3d:active {
+    transition-duration: var(--dur-instant);
+    transform: translateY(0) rotateX(0) scale(0.98);
+  }
+  
+  // Button 3D lift
+  .btn-3d {
+    transition: 
+      transform var(--dur-base) var(--ease-spring),
+      box-shadow var(--dur-base) var(--ease-spring);
+    transform-style: preserve-3d;
+    transform-origin: center;
+  }
+  
+  .btn-3d:hover {
+    transform: translateY(-3px) rotateX(8deg) translateZ(6px);
+    box-shadow: 
+      0 16px 24px -14px rgba(0, 0, 0, 0.55),
+      0 6px 12px -8px rgba(0, 0, 0, 0.35);
+  }
+  
+  .btn-3d:active {
+    transition-duration: var(--dur-instant);
+    transform: translateY(-1px) rotateX(4deg) scale(0.97);
+  }
+}
+
+// Touch-friendly fallbacks
+@media (pointer: coarse) {
+  .interactive-3d:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-3d:active {
+    transform: scale(0.97);
+  }
+}
+
+// ============================================================
+// SCROLL-REVEAL BASE (enhanced from _3d.scss)
+// ============================================================
+
+.has-anim .reveal {
+  opacity: 0;
+  transform: perspective(var(--perspective-medium)) 
+    translate3d(0, 30px, -60px) rotateX(6deg);
+}
+
+.has-anim .reveal.is-inview {
+  opacity: 1;
+  transform: none;
+  transition: 
+    opacity var(--dur-smooth) var(--ease-spring) var(--reveal-delay, 0ms),
+    transform var(--dur-smooth) var(--ease-spring) var(--reveal-delay, 0ms);
+}
+
+// Variant: Section headers (more dramatic)
+.has-anim .reveal--section {
+  transform: perspective(var(--perspective-deep)) 
+    translate3d(0, 50px, -100px) rotateX(10deg) scale(0.96);
+}
+
+.has-anim .reveal--section.is-inview {
+  transition-duration: var(--dur-heroic);
+  transition-timing-function: var(--ease-out-expo);
+}
+
+// Variant: Cards (3D rise)
+.has-anim .reveal--card {
+  transform: perspective(var(--perspective-medium)) 
+    translate3d(0, 40px, -80px) rotateX(8deg);
+}
+
+.has-anim .reveal--card.is-inview {
+  transition-duration: var(--dur-smooth);
+}
+
+// Variant: Text blocks (subtle)
+.has-anim .reveal--text {
+  transform: translate3d(0, 20px, 0);
+}
+
+.has-anim .reveal--text.is-inview {
+  transition-duration: var(--dur-base);
+}
+
+// Variant: CTA buttons (inviting)
+.has-anim .reveal--cta {
+  transform: translate3d(0, 16px, 0) scale(0.94);
+}
+
+.has-anim .reveal--cta.is-inview {
+  transition-duration: var(--dur-smooth);
+  transition-timing-function: var(--ease-bounce-subtle);
+}
+
+// Variant: Stats/numbers (data emphasis)
+.has-anim .reveal--stat {
+  transform: translate3d(0, 30px, 0);
+  opacity: 0;
+}
+
+.has-anim .reveal--stat.is-inview {
+  transition-duration: var(--dur-heroic);
+  transition-timing-function: var(--ease-out-expo);
+}
+
+// Hover transitions for revealed items (no stagger delay)
+.has-anim .tile.reveal.is-inview,
+.has-anim .trend-card.reveal.is-inview,
+.has-anim .cat-tile.reveal.is-inview,
+.has-anim .p-card.reveal.is-inview {
+  transition: 
+    opacity var(--dur-smooth) var(--ease-spring) var(--reveal-delay, 0ms),
+    transform var(--dur-base) var(--ease-spring) var(--reveal-delay, 0ms),
+    box-shadow var(--dur-base) var(--ease-spring);
+}
+
+// ============================================================
+// VIEW TRANSITIONS (MPA)
+// ============================================================
+
+@supports (view-transition-name: test) {
+  // Page-level transition
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur-smooth);
+    animation-timing-function: var(--ease-spring);
+  }
+  
+  ::view-transition-old(root) {
+    animation-name: fade-out, slide-out;
+  }
+  
+  ::view-transition-new(root) {
+    animation-name: fade-in, slide-in;
+  }
+  
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes fade-in { from { opacity: 0; } }
+  
+  @keyframes slide-out { to { transform: translateX(-30px); } }
+  @keyframes slide-in { from { transform: translateX(30px); } }
+  
+  // Shared element transitions
+  .shared-element {
+    view-transition-name: var(--shared-name);
+  }
+  
+  // Product image shared transition
+  .shared-product-image {
+    view-transition-name: product-image;
+  }
+}
+
+// ============================================================
+// FOCUS VISIBLE (accessibility)
+// ============================================================
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+// Remove outline for mouse users
+:focus:not(:focus-visible) {
+  outline: none;
+}

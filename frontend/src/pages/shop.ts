@@ -95,6 +95,20 @@ function filterGroup(
     </div>`;
 }
 
+function skeletonCard(): string {
+  return `
+    <article class="p-card p-card--skeleton" aria-hidden="true">
+      <div class="p-card__media"><span class="sk sk-media"></span></div>
+      <div class="p-card__body">
+        <span class="sk sk-brand"></span>
+        <span class="sk sk-name"></span>
+        <span class="sk sk-name sk-name--short"></span>
+        <span class="sk sk-meta"></span>
+        <span class="sk sk-price"></span>
+      </div>
+    </article>`;
+}
+
 async function fetchProducts(state: ShopState): Promise<Product[]> {
   const params = new URLSearchParams({ pageSize: "60", sort: state.sort });
   if (state.category) params.set("category", state.category);
@@ -155,7 +169,7 @@ export function initShopPage(): void {
     <button class="filter-clear" id="filter-clear">Clear all filters</button>`;
 
   const render = async (): Promise<void> => {
-    grid.innerHTML = `<div class="shop-loading">Loading products…</div>`;
+    grid.innerHTML = skeletonCard().repeat(8);
     const items = await fetchProducts(state);
 
     if (count) {

@@ -27,6 +27,14 @@ public interface IOrderRepository
     Task<decimal> RevenueAsync(CancellationToken ct = default);
 }
 
+public interface IWishlistRepository
+{
+    Task<List<WishlistItem>> GetForUserAsync(string userId, CancellationToken ct = default);
+    Task<bool> AnyAsync(string userId, string productId, CancellationToken ct = default);
+    Task<WishlistItem?> AddAsync(string userId, string productId, CancellationToken ct = default);
+    Task<bool> RemoveAsync(string userId, string productId, CancellationToken ct = default);
+}
+
 public interface IUserRepository
 {
     Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct = default);

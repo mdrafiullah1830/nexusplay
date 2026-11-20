@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusPlay — Hero 3D Parallax Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0a; color: #fff; overflow-x: hidden; }
+
+    /* HERO */
+    .hero { position: relative; height: 100vh; overflow: hidden; }
+    #hero-3d-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .hero::before { content: ""; position: absolute; inset: -50%; z-index: 1; background: conic-gradient(from 180deg at 50% 50%, #ff00cc, #3333ff, #00ccff, #ff00cc); background-size: 300% 300%; animation: gradientMove 12s ease infinite; filter: blur(70px); opacity: 0.3; }
+    @keyframes gradientMove { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+    .hero__slide { position: absolute; inset: 0; display: flex; align-items: flex-end; }
+    .hero__slide--1 { background: radial-gradient(ellipse at 70% 30%, rgba(215,255,62,0.25), transparent 55%), linear-gradient(160deg, #1a1a1a 0%, #0a0a0a 60%, #161616 100%); }
+    .hero__slide--2 { background: radial-gradient(ellipse at 25% 40%, rgba(72,130,255,0.28), transparent 55%), linear-gradient(200deg, #141414 0%, #0b0b12 60%, #101018 100%); }
+    .hero__slide--3 { background: radial-gradient(ellipse at 75% 60%, rgba(255,72,120,0.22), transparent 55%), linear-gradient(140deg, #17110f 0%, #0d0a0a 60%, #151010 100%); }
+    .hero__content { position: relative; z-index: 2; padding: 0 clamp(1rem, 4vw, 3rem) clamp(4rem, 10vh, 7rem); max-width: 900px; margin-inline: auto; }
+    .hero__eyebrow { font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #8ecae6; margin-bottom: 0.5rem; }
+    .hero__title { font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 900; text-transform: uppercase; font-size: clamp(3rem, 9vw, 7.5rem); line-height: 0.92; letter-spacing: -0.03em; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
+    .hero__sub { font-size: clamp(1rem, 1.6vw, 1.25rem); color: rgba(255,255,255,0.85); margin-top: 1rem; max-width: 540px; }
+    .hero__cta { margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero__btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: linear-gradient(225deg, #8e2de2, #4a00e0); color: #fff; border: none; border-radius: 999px; font-weight: 600; font-size: 0.875rem; padding: 0.75rem 1.75rem; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 8px 20px rgba(142,45,226,0.35); }
+    .hero__btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(142,45,226,0.5); }
+    .hero__btn--ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.6); box-shadow: none; }
+    .hero__btn--ghost:hover { background: rgba(255,255,255,0.12); }
+
+    .hero__dots { position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 5; }
+    .hero__dot { width: 28px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.35); border: none; cursor: pointer; transition: background 0.2s ease; }
+    .hero__dot.is-active { background: #8ecae6; }
+    .hero__arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 5; background: rgba(255,255,255,0.12); backdrop-filter: blur(6px); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: background 0.2s ease; }
+    .hero__arrow:hover { background: rgba(255,255,255,0.28); }
+    .hero__arrow--prev { left: 1.5rem; }
+    .hero__arrow--next { right: 1.5rem; }
+    @media (min-width: 1024px) { .hero__arrow { display: flex; align-items: center; justify-content: center; } }
+
+    /* INSTRUCTIONS */
+    .instructions { position: fixed; bottom: 1rem; right: 1rem; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem 1.25rem; z-index: 100; max-width: 280px; font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .instructions strong { color: #8ecae6; }
+    .instructions p { margin-top: 0.5rem; }
+
+    /* CONTROLS */
+    .controls { position: fixed; top: 1rem; right: 1rem; z-index: 100; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .ctrl-btn { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.75rem; cursor: pointer; transition: all 0.2s ease; }
+    .ctrl-btn:hover { background: rgba(255,255,255,0.1); }
+    .ctrl-btn.active { background: rgba(142,45,226,0.5); border-color: rgba(142,45,226,0.8); }
+
+    /* SECTION DUMMY */
+    .dummy-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body data-page="home">
+
+  <!-- HERO -->
+  <section class="hero" aria-label="Highlights">
+    <div class="hero__slide hero__slide--1 is-active">
+      <div class="hero__content">
+        <div class="hero__eyebrow">New Release</div>
+        <h1 class="hero__title">GameSir G7 Pro<br />8K</h1>
+        <p class="hero__sub">Phantom Blade Zero Limited Edition — 8K polling, multi-platform, pre-order now.</p>
+        <div class="hero__cta">
+          <a class="hero__btn" href="#">Shop Controllers</a>
+          <a class="hero__btn hero__btn--ghost" href="#">Track Order</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero__slide hero__slide--2">
+      <div class="hero__content">
+        <div class="hero__eyebrow">Flydigi Apex Series</div>
+        <h1 class="hero__title">Own The<br />Controller Wall</h1>
+        <p class="hero__sub">Apex 6 Pro, Vader 5 Pro & more — Hall-effect sticks, 8K polling.</p>
+        <div class="hero__cta">
+          <a class="hero__btn" href="#">Shop Flydigi</a>
+          <a class="hero__btn hero__btn--ghost" href="#">View All</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero__slide hero__slide--3">
+      <div class="hero__content">
+        <div class="hero__eyebrow">Budget Kings</div>
+        <h1 class="hero__title">Play More,<br />Pay Less</h1>
+        <p class="hero__sub">Controllers from BDT 2,900 — with real after-sales support across Bangladesh.</p>
+        <div class="hero__cta">
+          <a class="hero__btn" href="#">Shop Under 5K</a>
+          <a class="hero__btn hero__btn--ghost" href="#">Pre-Orders</a>
+        </div>
+      </div>
+    </div>
+
+    <button class="hero__arrow hero__arrow--prev" aria-label="Previous slide">&#8249;</button>
+    <button class="hero__arrow hero__arrow--next" aria-label="Next slide">&#8250;</button>
+    <div class="hero__dots">
+      <button class="hero__dot is-active" aria-label="Slide 1"></button>
+      <button class="hero__dot" aria-label="Slide 2"></button>
+      <button class="hero__dot" aria-label="Slide 3"></button>
+    </div>
+  </section>
+
+  <!-- DUMMY SCROLL CONTENT -->
+  <section class="dummy-section"><span>Scroll down ↓ for parallax preview</span></section>
+
+  <!-- THREE.JS CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- HERO 3D LOGIC -->
+  <script>
+    (function() {
+      const FADE_SPEED = 0.03;
+      const PARALLAX_STRENGTH = 50;
+      const SMOOTHNESS = 0.08;
+      const IDLE_MS = 1000;
+
+      let state = 'active';
+      let targetX = 0, targetY = 0;
+      let currentX = 0, currentY = 0;
+      let idleTimer = null;
+      let animId = null;
+      let scene, camera, renderer, heroEl;
+
+      function init() {
+        if (typeof THREE === 'undefined') { console.warn('Three.js not loaded'); return; }
+        heroEl = document.querySelector('.hero');
+        if (!heroEl) return;
+        heroEl.style.position = 'relative';
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        canvas.id = 'hero-3d-canvas';
+        canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+        heroEl.appendChild(canvas);
+
+        const T = window.THREE;
+        scene = new T.Scene();
+        camera = new T.PerspectiveCamera(75, heroEl.clientWidth / heroEl.clientHeight, 0.1, 1000);
+        renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(heroEl.clientWidth, heroEl.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Gradient texture
+        const gc = document.createElement('canvas');
+        gc.width = 512; gc.height = 512;
+        const ctx = gc.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 512, 512);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(0.5, '#16213e');
+        grad.addColorStop(1, '#0f3460');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        const geo = new T.PlaneGeometry(400, 400, 10, 10);
+        const mat = new T.MeshBasicMaterial({
+          map: new T.CanvasTexture(gc),
+          transparent: true,
+          opacity: 0.4,
+          side: T.DoubleSide
+        });
+        const mesh = new T.Mesh(geo, mat);
+        scene.add(mesh);
+        camera.position.z = 5;
+      }
+
+      function handleMouseMove(e) {
+        if (!renderer) return;
+        const rect = heroEl.getBoundingClientRect();
+        targetX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        targetY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        state = 'active';
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => { state = 'idle'; }, IDLE_MS);
+      }
+
+      function animate() {
+        animId = requestAnimationFrame(animate);
+        if (!renderer) return;
+        if (state === 'idle') {
+          currentX += (targetX - currentX) * FADE_SPEED;
+          currentY += (targetY - currentY) * FADE_SPEED;
+          if (Math.abs(targetX - currentX) < 0.001 && Math.abs(targetY - currentY) < 0.001) {
+            currentX = 0; currentY = 0; state = 'active';
+          }
+        } else {
+          currentX += (targetX - currentX) * SMOOTHNESS;
+          currentY += (targetY - currentY) * SMOOTHNESS;
+        }
+        const m = scene.children[0];
+        if (m) {
+          m.rotation.x = currentY * (PARALLAX_STRENGTH / 1000);
+          m.rotation.y = currentX * (PARALLAX_STRENGTH / 1000);
+        }
+        renderer.render(scene, camera);
+      }
+
+      // Init on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(() => { init(); window.addEventListener('mousemove', handleMouseMove); animate(); }, 300);
+        });
+      } else {
+        setTimeout(() => { init(); window.addEventListener('mousemove', handleMouseMove); animate(); }, 300);
+      }
+
+      // Resize handler
+      window.addEventListener('resize', () => {
+        if (!heroEl || !camera || !renderer) return;
+        camera.aspect = heroEl.clientWidth / heroEl.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(heroEl.clientWidth, heroEl.clientHeight);
+      });
+    })();
+  </script>
+
+  <!-- SLIDER LOGIC (simple) -->
+  <script>
+    (function() {
+      const slides = document.querySelectorAll('.hero__slide');
+      const dots = document.querySelectorAll('.hero__dot');
+      let idx = 0;
+      const nextBtn = document.querySelector('.hero__arrow--next');
+      const prevBtn = document.querySelector('.hero__arrow--prev');
+
+      function show(n) {
+        if (n === idx) return;
+        slides[idx].classList.remove('is-active');
+        slides[n].classList.add('is-active');
+        dots[idx].classList.remove('is-active');
+        dots[n].classList.add('is-active');
+        idx = n;
+      }
+      if (nextBtn) nextBtn.addEventListener('click', () => show((idx + 1) % slides.length));
+      if (prevBtn) prevBtn.addEventListener('click', () => show((idx - 1 + slides.length) % slides.length));
+      dots.forEach((d, i) => d.addEventListener('click', () => show(i)));
+      setInterval(() => show((idx + 1) % slides.length), 6000);
+    })();
+  </script>
+
+  <!-- ONBOARDING OVERLAY -->
+  <div class="instructions" id="toast-box">
+    <strong>3D Hero Animation Test</strong>
+    <p>Move your mouse over the hero section above to see the parallax rotation effect. Stop moving to see the fade-back to center.</p>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="ctrl-btn active" onclick="this.classList.toggle('active')">Mouse Follow</button>
+    <button class="ctrl-btn" onclick="document.body.style.fontFamily='Georgia,serif'">Serif Font</button>
+  </div>
+</body>
+</html>
