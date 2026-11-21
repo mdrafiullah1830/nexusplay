@@ -1,5 +1,4 @@
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
 
 namespace NexusPlay.Api.Services;
 
@@ -11,48 +10,65 @@ public interface IEmailService
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _config;
-    private readonly string? _smtpHost;
-    private readonly int _smtpPort;
-    private readonly string? _smtpUser;
-    private readonly string? _smtpPass;
-    private readonly string? _fromEmail;
-    private readonly string? _fromName;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration config)
+    public EmailService(IConfiguration config, ILogger<EmailService> logger)
     {
         _config = config;
-        _smtpHost = config["Email:Smtp:Host"];
-        _smtpPort = int.TryParse(config["Email:Smtp:Port"], out var p) ? p : 587;
-        _smtpUser = config["Email:Smtp:User"];
-        _smtpPass = config["Email:Smtp:Password"];
-        _fromEmail = config["Email:From:Address"];
-        _fromName = config["Email:From:Name"];
+        _logger = logger;
     }
 
     public async Task SendAsync(string to, string subject, string body, CancellationToken ct = default)
     {
-        // Skip if not configured - log and continue (fail silently in dev)
-        if (string.IsNullOrEmpty(_smtpHost) || string.IsNullOrEmpty(_fromEmail))
+        var host = _config["Email:Smtp:Host"];
+        var fromAddress = _config["Email:From:Address"];
+        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(fromAddress))
         {
-            // In production, this should be logged or surfaced
+            _logger.LogWarning("Order email skipped because SMTP is not configured.");
             return;
         }
 
-        var client = new SmtpClient(_smtpHost, _smtpPort)
+        if (!MailAddress.TryCreate(to, out _) || !MailAddress.TryCreate(fromAddress, out _))
+        {
+            _logger.LogWarning("Order email skipped because the sender or recipient address is invalid.");
+            return;
+        }
+
+        var port = int.TryParse(_config["Email:Smtp:Port"], out var configuredPort)
+            ? Math.Clamp(configuredPort, 1, 65535)
+            : 587;
+
+        using var client = new SmtpClient(host, port)
         {
             EnableSsl = true,
-            Credentials = new System.Net.NetworkCredential(_smtpUser, _smtpPass),
+            Credentials = new System.Net.NetworkCredential(
+                _config["Email:Smtp:User"],
+                _config["Email:Smtp:Password"]),
         };
 
-        var mail = new MailMessage
+        using var mail = new MailMessage
         {
-            From = new MailAddress(_fromEmail, _fromName ?? "NexusPlay"),
+            From = new MailAddress(fromAddress, _config["Email:From:Name"] ?? "NexusPlay"),
             Subject = subject,
             Body = body,
             IsBodyHtml = true,
         };
         mail.To.Add(to);
 
-        await client.SendMailAsync(mail);
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            await client.SendMailAsync(mail);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Notifications must not make an already-saved order look like it
+            // failed. Keep the error server-side and let the order persist.
+            _logger.LogError(ex, "Failed to send order confirmation email.");
+        }
     }
 }
