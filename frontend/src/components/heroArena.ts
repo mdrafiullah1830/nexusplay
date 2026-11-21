@@ -197,7 +197,7 @@ export function initHeroArena(): void {
           const distance = Math.hypot(particle.x - other.x, particle.y - other.y);
           if (distance > 112) continue;
           const alpha = (1 - distance / 112) * 0.2;
-          context.strokeStyle = "rgba(40, 57, 17, " + alpha.toFixed(3) + ")";
+          context.strokeStyle = "rgba(72, 151, 255, " + alpha.toFixed(3) + ")";
           context.lineWidth = 0.7;
           context.beginPath();
           context.moveTo(particle.x, particle.y);
@@ -207,7 +207,7 @@ export function initHeroArena(): void {
       }
 
       for (const particle of particles) {
-        context.fillStyle = "rgba(39, 55, 17, 0.38)";
+        context.fillStyle = "rgba(106, 173, 255, 0.62)";
         context.beginPath();
         context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
         context.fill();
