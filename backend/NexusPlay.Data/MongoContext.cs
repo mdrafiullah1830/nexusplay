@@ -20,28 +20,51 @@ public class MongoContext
 
     public async Task EnsureIndexesAsync(CancellationToken ct = default)
     {
-        await Orders.Indexes.CreateManyAsync(new[]
+        // Old order numbers used a short random suffix, so an existing database
+        // could contain duplicates. Only create the unique index when safe.
+        var duplicateOrderNo = await Orders.Aggregate()
+            .Group(order => order.OrderNo,
+                group => new { OrderNo = group.Key, Count = group.Count() })
+            .Match(group => group.Count > 1)
+            .FirstOrDefaultAsync(ct);
+
+        if (duplicateOrderNo is null)
         {
+            await Orders.Indexes.CreateOneAsync(
+                new CreateIndexModel<Order>(
+                    Builders<Order>.IndexKeys.Ascending(order => order.OrderNo),
+                    new CreateIndexOptions { Unique = true, Name = "ux_orderno" }),
+                cancellationToken: ct);
+        }
+        else
+        {
+            Console.Error.WriteLine(
+                "[startup] Duplicate legacy order numbers detected. The unique order-number index was not created; resolve duplicates before re-enabling it.");
+        }
+
+        await Orders.Indexes.CreateOneAsync(
             new CreateIndexModel<Order>(
-                Builders<Order>.IndexKeys.Ascending(o => o.OrderNo),
-                new CreateIndexOptions { Unique = true, Name = "ux_orderno" }),
-            new CreateIndexModel<Order>(
-                Builders<Order>.IndexKeys.Ascending(o => o.UserId).Descending(o => o.CreatedAt),
+                Builders<Order>.IndexKeys.Ascending(order => order.UserId)
+                    .Descending(order => order.CreatedAt),
                 new CreateIndexOptions { Name = "ix_user_created" }),
-            new CreateIndexModel<Order>(Builders<Order>.IndexKeys.Descending(o => o.CreatedAt)),
-        }, ct);
+            cancellationToken: ct);
+
+        await Orders.Indexes.CreateOneAsync(
+            new CreateIndexModel<Order>(
+                Builders<Order>.IndexKeys.Descending(order => order.CreatedAt)),
+            cancellationToken: ct);
 
         await Users.Indexes.CreateOneAsync(
             new CreateIndexModel<AppUser>(
-                Builders<AppUser>.IndexKeys.Ascending(u => u.Email),
+                Builders<AppUser>.IndexKeys.Ascending(user => user.Email),
                 new CreateIndexOptions { Unique = true, Name = "ux_email" }),
             cancellationToken: ct);
 
         await Wishlists.Indexes.CreateOneAsync(
             new CreateIndexModel<WishlistItem>(
                 Builders<WishlistItem>.IndexKeys
-                    .Ascending(w => w.UserId)
-                    .Ascending(w => w.ProductId),
+                    .Ascending(item => item.UserId)
+                    .Ascending(item => item.ProductId),
                 new CreateIndexOptions { Unique = true, Name = "ux_user_product" }),
             cancellationToken: ct);
     }
