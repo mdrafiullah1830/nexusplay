@@ -41,6 +41,7 @@ public class EmailService : IEmailService
         using var client = new SmtpClient(host, port)
         {
             EnableSsl = true,
+            Timeout = 10000,
             Credentials = new System.Net.NetworkCredential(
                 _config["Email:Smtp:User"],
                 _config["Email:Smtp:Password"]),
