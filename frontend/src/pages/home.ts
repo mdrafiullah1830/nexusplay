@@ -23,79 +23,7 @@ async function loadProducts(): Promise<Product[]> {
   }
 }
 
-/**
- * Desktop scroll-story: the sticky showcase follows the most visible step.
- * Mobile keeps one image per step so the story remains readable without a
- * sticky visual competing with the content.
- */
-function initScrollStory(): void {
-  const section = document.querySelector<HTMLElement>("[data-experience]");
-  const stage = section?.querySelector<HTMLElement>("[data-story-stage]");
-  const stageImage = stage?.querySelector<HTMLImageElement>(".experience__stage-image");
-  const currentLabel = stage?.querySelector<HTMLElement>("[data-story-label-current]");
-  const currentCount = stage?.querySelector<HTMLElement>("[data-story-count]");
-  const steps = Array.from(section?.querySelectorAll<HTMLElement>("[data-story-step]") ?? []);
-
-  if (!section || !stage || !stageImage || steps.length === 0) return;
-
-  let activeStep: HTMLElement | null = null;
-  const visibleSteps = new Map<HTMLElement, number>();
-
-  const activate = (step: HTMLElement): void => {
-    if (activeStep === step) return;
-    activeStep = step;
-
-    steps.forEach((item) => {
-      const active = item === step;
-      item.dataset.active = String(active);
-      if (active) item.setAttribute("aria-current", "step");
-      else item.removeAttribute("aria-current");
-    });
-
-    const index = step.dataset.storyStep ?? "01";
-    const source = step.dataset.storyImage;
-    stage.dataset.index = index;
-    if (currentCount) currentCount.textContent = index + " — " + String(steps.length).padStart(2, "0");
-    if (currentLabel) currentLabel.textContent = step.dataset.storyLabel ?? "NEXUSPLAY / FEATURED GEAR";
-
-    if (!source || stageImage.getAttribute("src") === source) return;
-
-    const incoming = new Image();
-    incoming.decoding = "async";
-    incoming.onload = () => {
-      if (activeStep !== step) return;
-      stage.classList.add("is-changing");
-      stageImage.addEventListener("load", () => stage.classList.remove("is-changing"), { once: true });
-      stageImage.src = source;
-      stageImage.alt = step.dataset.storyAlt ?? "Featured NexusPlay gaming hardware";
-    };
-    incoming.src = source;
-  };
-
-  activate(steps[0]);
-
-  if (!("IntersectionObserver" in window)) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      const target = entry.target as HTMLElement;
-      if (entry.isIntersecting) visibleSteps.set(target, entry.intersectionRatio);
-      else visibleSteps.delete(target);
-    });
-
-    const mostVisible = [...visibleSteps.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-    if (mostVisible) activate(mostVisible);
-  }, {
-    root: null,
-    rootMargin: "-20% 0px -20% 0px",
-    threshold: [0, 0.2, 0.4, 0.6, 0.8],
-  });
-
-  steps.forEach((step) => observer.observe(step));
-}
-
 export async function initHomePage(): Promise<void> {
-  initScrollStory();
   const collections = [
     { number: "01", label: "Controller lineup", eyebrow: "PRECISION CONTROL", sub: "Find the feel that fits your game.", href: "/shop.html?category=controllers", image: REPO_IMAGE_ROOT + "/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp", alt: "GameSir G7 Pro 8K controller", tone: "tile--controller" },
     { number: "02", label: "Pro performance", eyebrow: "BUILT TO COMPETE", sub: "Explore the Flydigi Apex range.", href: "/shop.html?brand=Flydigi", image: REPO_IMAGE_ROOT + "/Flydigi_Apex_6_Pro/01_angle.webp", alt: "Flydigi Apex 6 Pro controller", tone: "tile--performance" },
