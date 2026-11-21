@@ -8,6 +8,7 @@ import { getWishlistCount } from "../pages/product";
 import { getLang, setLang, t } from "../services/i18n";
 import { initSearch, type SearchApi } from "./searchOverlay";
 import { initMiniCart, openMiniCart } from "./miniCart";
+import { getTheme, toggleTheme } from "../services/theme";
 
 const SUPPORT_TEL = "+8801782577251";
 const SUPPORT_TEL_LABEL = "+880 1782-577251";
@@ -149,6 +150,16 @@ function mobileMenuMarkup(): string {
 
 // -- Header markup --------------------------------------------
 function renderHeader(root: HTMLElement): void {
+  const themeToggleMarkup = document.body.dataset.page === "home"
+    ? `<button class="navbar__icon-btn navbar__theme-btn" id="theme-btn" type="button"
+        aria-label="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
+        title="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
+        aria-pressed="${getTheme() === "light"}">
+        <span class="navbar__theme-icon" aria-hidden="true">${getTheme() === "dark" ? "☼" : "☾"}</span>
+        <span class="navbar__theme-label">${getTheme() === "dark" ? "LIGHT" : "DARK"}</span>
+      </button>`
+    : "";
+
   root.innerHTML = `
     <a class="skip-link" href="#main-content">${t("skip")}</a>${announceMarkup()}
 
@@ -176,6 +187,8 @@ function renderHeader(root: HTMLElement): void {
           <a class="navbar__icon-btn navbar__wishlist" href="/wishlist.html" aria-label="${t("nav.wishlist")}">
             ♥<span class="navbar__wishlist-count" id="wishlist-count">${getWishlistCount()}</span>
           </a>
+
+          ${themeToggleMarkup}
 
           <button class="navbar__icon-btn navbar__lang" id="lang-btn" type="button"
                   aria-label="${t("nav.language")}" title="${t("nav.language")}">
@@ -350,6 +363,23 @@ function bindClicks(root: HTMLElement, signal: AbortSignal): void {
     "click",
     (event) => {
       const target = event.target as HTMLElement;
+
+      if (target.closest("#theme-btn")) {
+        const next = toggleTheme();
+        const button = root.querySelector<HTMLButtonElement>("#theme-btn");
+        if (button) {
+          const targetMode = next === "dark" ? "light" : "dark";
+          const label = "Switch to " + targetMode + " mode";
+          button.setAttribute("aria-label", label);
+          button.setAttribute("title", label);
+          button.setAttribute("aria-pressed", String(next === "light"));
+          const icon = button.querySelector<HTMLElement>(".navbar__theme-icon");
+          const text = button.querySelector<HTMLElement>(".navbar__theme-label");
+          if (icon) icon.textContent = next === "dark" ? "☼" : "☾";
+          if (text) text.textContent = next === "dark" ? "LIGHT" : "DARK";
+        }
+        return;
+      }
 
       if (target.closest("#lang-btn") || target.closest("[data-lang-toggle]")) {
         setLang(getLang() === "en" ? "bn" : "en");
