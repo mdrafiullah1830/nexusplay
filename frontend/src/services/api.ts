@@ -4,7 +4,7 @@
 
 const BASE: string = (
   (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_URL ?? "/api"
-).replace(/\\/+$/, "");
+).replace(/\/+$/, "");
 
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
