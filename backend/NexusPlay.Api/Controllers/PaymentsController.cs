@@ -42,6 +42,15 @@ public class PaymentsController : ControllerBase
         if (req.Items is null || req.Items.Count == 0)
             return BadRequest(new { message = "Cart is empty" });
 
+        if (string.IsNullOrWhiteSpace(req.Customer.Email) ||
+            req.Customer.Email.Length > 50 ||
+            !System.Net.Mail.MailAddress.TryCreate(req.Customer.Email, out _))
+            return BadRequest(new { message = "A valid email address (maximum 50 characters) is required for card payments." });
+
+        if (req.Customer.Name.Length > 50 || req.Customer.Address.Length > 50 ||
+            (req.Customer.City?.Length ?? 0) > 50)
+            return BadRequest(new { message = "Customer name, address and city must each be 50 characters or fewer for card payments." });
+
         if (!string.Equals(req.PaymentMethod, "card", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "This endpoint is only for card gateway payments." });
 
@@ -213,6 +222,10 @@ public class PaymentsController : ControllerBase
             return Conflict(new { message = "This order is no longer awaiting payment" });
         }
 
+        var frontendUrl = _config["App:FrontendUrl"]?.TrimEnd('/');
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+            return Redirect($"{frontendUrl}/track.html?orderNo={Uri.EscapeDataString(order.OrderNo)}&payment=success");
+
         return Ok(new
         {
             orderNo = order.OrderNo,
@@ -233,6 +246,10 @@ public class PaymentsController : ControllerBase
 
         // A browser redirect is not proof of a failed transaction. Only a
         // verified gateway notification may change the persisted payment state.
+        var frontendUrl = _config["App:FrontendUrl"]?.TrimEnd('/');
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+            return Redirect($"{frontendUrl}/track.html?orderNo={Uri.EscapeDataString(order.OrderNo)}&payment=pending");
+
         return Ok(new
         {
             orderNo = order.OrderNo,
@@ -291,7 +308,7 @@ public class PaymentsController : ControllerBase
     private static string GenerateOrderNo()
     {
         var stamp = DateTime.UtcNow.ToString("yyMMdd");
-        var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(4));
+        var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(8));
         return $"NP{stamp}{suffix}";
     }
 }
