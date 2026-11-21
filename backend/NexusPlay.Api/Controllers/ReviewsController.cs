@@ -1,10 +1,8 @@
+using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NexusPlay.Api.Dtos;
-using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
-using NexusPlay.Core.Models;
 
 namespace NexusPlay.Api.Controllers;
 
@@ -13,50 +11,70 @@ namespace NexusPlay.Api.Controllers;
 public class ReviewsController : ControllerBase
 {
     private readonly IProductRepository _products;
+    private readonly IUserRepository _users;
 
-    public ReviewsController(IProductRepository products)
+    public ReviewsController(IProductRepository products, IUserRepository users)
     {
         _products = products;
+        _users = users;
     }
 
     [HttpPost("{productId}")]
     [Authorize]
-    public async Task<ActionResult> Submit(string productId, [FromBody] ReviewDto dto, CancellationToken ct)
+    public async Task<ActionResult> Submit(
+        string productId, [FromBody] ReviewDto dto, CancellationToken ct)
     {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        var user = await _users.GetAsync(userId, ct);
+        if (user is null) return Unauthorized();
+
         var product = await _products.GetAsync(productId, ct);
         if (product is null)
             return NotFound(new { message = "Product not found" });
 
-        if (dto.Rating < 1 || dto.Rating > 5)
+        var comment = dto.Comment?.Trim();
+        if (dto.Rating is < 1 or > 5)
             return BadRequest(new { message = "Rating must be between 1 and 5" });
+        if (string.IsNullOrWhiteSpace(comment) || comment.Length > 1000)
+            return BadRequest(new { message = "Review comment must be between 1 and 1000 characters" });
 
-        if (product.Reviews == null)
-            product.Reviews = new List<string>();
+        product.Reviews ??= new List<string>();
+        // User identity is taken from the validated token/database, never from
+        // a client-controlled display-name field. Encode before the legacy
+        // string format is embedded into the product page's HTML.
+        var safeName = WebUtility.HtmlEncode(user.Name);
+        var safeComment = WebUtility.HtmlEncode(comment);
+        product.Reviews.Add($"{safeName}: {safeComment} (Rating: {dto.Rating})");
 
-        product.Reviews.Add($"{dto.UserName}: {dto.Comment} (Rating: {dto.Rating})");
-
-        // Calculate average rating
-        double avg = 0;
-        if (product.Reviews.Count > 0)
+        var sum = 0d;
+        var count = 0;
+        foreach (var review in product.Reviews)
         {
-            double sum = 0;
-            foreach (var rev in product.Reviews)
+            var marker = review.LastIndexOf("Rating: ", StringComparison.Ordinal);
+            if (marker < 0) continue;
+
+            var ratingText = review[(marker + 8)..].TrimEnd(')');
+            if (double.TryParse(ratingText,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out var rating) &&
+                rating is >= 1 and <= 5)
             {
-                var last = rev.LastIndexOf("Rating: ");
-                if (last >= 0)
-                {
-                    var ratingStr = rev.Substring(last + 8);
-                    if (double.TryParse(ratingStr, out double r))
-                        sum += r;
-                }
+                sum += rating;
+                count++;
             }
-            avg = sum / product.Reviews.Count;
         }
 
-        product.Rating = Math.Round(avg, 1);
-
+        product.Rating = count == 0 ? 0 : Math.Round(sum / count, 1);
         await _products.ReplaceAsync(product, ct);
-        return Ok(new { message = "Review submitted", newAverageRating = product.Rating, totalReviews = product.Reviews.Count });
+
+        return Ok(new
+        {
+            message = "Review submitted",
+            newAverageRating = product.Rating,
+            totalReviews = product.Reviews.Count,
+        });
     }
 
     [HttpGet("{productId}")]
@@ -75,47 +93,41 @@ public class ReviewsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Reviews are stored as "User: comment (Rating: n)" strings on the
-    /// product document; this splits them back into structured entries so the
-    /// UI can render name / text / rating separately.
-    /// </summary>
     private static object ParseReviews(List<string>? reviews)
     {
-        if (reviews is null || reviews.Count == 0) return Array.Empty<object>();
+        if (reviews is null || reviews.Count == 0)
+            return Array.Empty<object>();
 
-        return reviews.Select(r =>
+        return reviews.Select(review =>
         {
             var rating = 0;
-            var text = r;
-
-            var marker = r.LastIndexOf("(Rating: ", System.StringComparison.Ordinal);
-            if (marker >= 0 && r.EndsWith(")", System.StringComparison.Ordinal))
+            var text = review;
+            var marker = review.LastIndexOf("(Rating: ", StringComparison.Ordinal);
+            if (marker >= 0 && review.EndsWith(")", StringComparison.Ordinal))
             {
-                var raw = r[(marker + 9)..^1];
+                var raw = review[(marker + 9)..^1];
                 int.TryParse(raw, out rating);
-                text = r[..marker].Trim();
+                text = review[..marker].Trim();
             }
 
-            var sep = text.IndexOf(':');
-            if (sep > 0)
+            var separator = text.IndexOf(':');
+            if (separator > 0)
             {
                 return (object)new
                 {
-                    userName = text[..sep].Trim(),
-                    comment = text[(sep + 1)..].Trim(),
+                    userName = text[..separator].Trim(),
+                    comment = text[(separator + 1)..].Trim(),
                     rating,
                 };
             }
 
-            return (object)new { userName = "", comment = text, rating };
+            return (object)new { userName = string.Empty, comment = text, rating };
         }).ToArray();
     }
 }
 
 public class ReviewDto
 {
-    public string UserName { get; set; } = "";
-    public string Comment { get; set; } = "";
+    public string Comment { get; set; } = string.Empty;
     public int Rating { get; set; }
 }
