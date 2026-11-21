@@ -134,5 +134,3 @@ document.addEventListener("DOMContentLoaded", async () => {
       break;
   }
 });
-
-export { toggleTheme };
