@@ -51,7 +51,7 @@ export function initCheckoutPage(): void {
                      placeholder="01XXXXXXXXX" />
             </label>
             <label class="span-2">Email
-              <input name="email" type="email" value="${user?.email ?? ""}" placeholder="you@example.com" />
+              <input name="email" type="email" maxlength="50" value="${user?.email ?? ""}" placeholder="you@example.com" />
             </label>
           </div>
         </section>
@@ -138,9 +138,11 @@ export function initCheckoutPage(): void {
     </div>`;
 
   const bkashPanel = document.getElementById("bkash-panel") as HTMLElement;
+  const emailInput = root.querySelector<HTMLInputElement>("input[name='email']")!;
   root.querySelectorAll<HTMLInputElement>("input[name='payment']").forEach((radio) =>
     radio.addEventListener("change", () => {
       bkashPanel.hidden = !(radio.value === "bkash" && radio.checked);
+      emailInput.required = radio.value === "card" && radio.checked;
     }),
   );
 
@@ -156,6 +158,7 @@ export function initCheckoutPage(): void {
     const name = String(data.get("name") ?? "").trim();
     const phone = String(data.get("phone") ?? "").trim();
     const address = String(data.get("address") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
     const payment = String(data.get("payment") ?? "cod");
     const trx = String(data.get("bkashTrxId") ?? "").trim();
 
@@ -171,6 +174,9 @@ export function initCheckoutPage(): void {
       return fail("Please enter a valid Bangladeshi phone number (01XXXXXXXXX).");
     if (payment === "bkash" && !trx)
       return fail("bKash TrxID is required for bKash payment.");
+    if (payment === "card" &&
+        (!email || email.length > 50 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)))
+      return fail("Enter a valid email address (maximum 50 characters) for card payment.");
 
     placeBtn.disabled = true;
     placeBtn.textContent = "Placing order…";
@@ -178,7 +184,7 @@ export function initCheckoutPage(): void {
     const customer = {
       name,
       phone,
-      email: String(data.get("email") ?? "").trim() || undefined,
+      email: email || undefined,
       address,
       city: String(data.get("city") ?? "").trim() || undefined,
       area: String(data.get("area") ?? "").trim() || undefined,
