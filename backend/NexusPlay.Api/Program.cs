@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using NexusPlay.Api.Middleware;
 using NexusPlay.Api.Services;
@@ -12,8 +13,6 @@ using NexusPlay.Data.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
 
-// Require real production configuration. The only fallback is a local-only
-// development key so a fresh clone can still be run without production secrets.
 var mongoConnection = builder.Configuration["Mongo:ConnectionString"];
 if (string.IsNullOrWhiteSpace(mongoConnection))
 {
@@ -30,7 +29,6 @@ if (string.IsNullOrWhiteSpace(jwtSecret))
     jwtSecret = "NexusPlay-local-development-secret-only-not-for-production-2026";
     builder.Configuration["Jwt:Secret"] = jwtSecret;
 }
-
 if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
     throw new InvalidOperationException("Jwt:Secret must be at least 32 bytes long.");
 
@@ -50,7 +48,6 @@ if (!isDevelopment)
         throw new InvalidOperationException("App:PublicUrl must be the public HTTPS URL of this API in production.");
 }
 
-// -- Rate limiting ---------------------------------------------------------
 builder.Services.AddRateLimiter(options =>
 {
     options.AddPolicy("AuthPolicy", httpContext =>
@@ -95,12 +92,10 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-// -- MVC + JSON ------------------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// -- MongoDB ---------------------------------------------------------------
 var mongoDatabase = builder.Configuration["Mongo:Database"] ?? "nexusplay";
 builder.Services.AddSingleton(new MongoContext(mongoConnection, mongoDatabase));
 builder.Services.AddSingleton<IProductRepository, ProductRepository>();
@@ -108,13 +103,11 @@ builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IWishlistRepository, WishlistRepository>();
 
-// -- CORS ------------------------------------------------------------------
 builder.Services.AddCors(options => options.AddPolicy("frontend", policy => policy
     .WithOrigins(corsOrigins)
     .AllowAnyHeader()
     .AllowAnyMethod()));
 
-// -- Application services --------------------------------------------------
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<OrderEventService>();
 builder.Services.AddHttpClient<IPaymentService, PaymentService>(client =>
@@ -123,7 +116,6 @@ builder.Services.AddHttpClient<ISmsService, SmsService>(client =>
     client.Timeout = TimeSpan.FromSeconds(15));
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
-// -- JWT authentication ----------------------------------------------------
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -147,7 +139,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// -- Security headers ------------------------------------------------------
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
@@ -169,13 +160,28 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAuditLogging();
 app.UseRateLimiter();
-app.UseStaticFiles();
+
+var uploadsDirectory = builder.Configuration["Storage:UploadsPath"];
+if (!string.IsNullOrWhiteSpace(uploadsDirectory))
+{
+    var fullUploadsDirectory = Path.GetFullPath(uploadsDirectory);
+    Directory.CreateDirectory(fullUploadsDirectory);
+    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(fullUploadsDirectory),
+        RequestPath = "/uploads/products",
+    });
+}
+else
+{
+    app.UseStaticFiles();
+}
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .AllowAnonymous();
 app.MapControllers();
 
-// -- Database bootstrap + admin seed --------------------------------------
 var context = app.Services.GetRequiredService<MongoContext>();
 await context.EnsureIndexesAsync();
 await ProductSeeder.SeedIfEmptyAsync(context);
@@ -210,6 +216,5 @@ static async Task SeedAdminAsync(IServiceProvider services, IHostEnvironment env
         PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
         Role = "admin",
     });
-
     Console.WriteLine("[seed] Initial admin account created from environment configuration.");
 }
