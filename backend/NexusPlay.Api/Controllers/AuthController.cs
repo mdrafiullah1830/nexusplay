@@ -1,7 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using BCrypt.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
@@ -23,37 +24,43 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Name) || string.IsNullOrWhiteSpace(req.Email) ||
             string.IsNullOrWhiteSpace(req.Password))
             return BadRequest(new { message = "Name, email and password are required" });
 
-        if (req.Password.Length < 6)
-            return BadRequest(new { message = "Password must be at least 6 characters" });
+        var email = req.Email.Trim().ToLowerInvariant();
+        if (!new EmailAddressAttribute().IsValid(email))
+            return BadRequest(new { message = "A valid email address is required" });
 
-        if (await _users.GetByEmailAsync(req.Email, ct) is not null)
+        if (req.Password.Length < 8)
+            return BadRequest(new { message = "Password must be at least 8 characters" });
+
+        if (await _users.GetByEmailAsync(email, ct) is not null)
             return Conflict(new { message = "An account with this email already exists" });
 
         var user = new AppUser
         {
             Name = req.Name.Trim(),
-            Email = req.Email.Trim(),
+            Email = email,
             Phone = req.Phone?.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             Role = "user",
         };
 
         await _users.CreateAsync(user, ct);
-
         return Ok(new AuthResponse(_tokens.CreateToken(user), ToDto(user)));
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest req, CancellationToken ct)
     {
-        var user = await _users.GetByEmailAsync(req.Email ?? "", ct);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password ?? "", user.PasswordHash))
+        var email = req.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var user = await _users.GetByEmailAsync(email, ct);
+        if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password ?? string.Empty, user.PasswordHash))
             return Unauthorized(new { message = "Invalid email or password" });
 
         return Ok(new AuthResponse(_tokens.CreateToken(user), ToDto(user)));
@@ -70,5 +77,6 @@ public class AuthController : ControllerBase
         return user is null ? Unauthorized() : Ok(ToDto(user));
     }
 
-    private static UserDto ToDto(AppUser u) => new(u.Id, u.Name, u.Email, u.Phone, u.Role);
+    private static UserDto ToDto(AppUser user) =>
+        new(user.Id, user.Name, user.Email, user.Phone, user.Role);
 }
