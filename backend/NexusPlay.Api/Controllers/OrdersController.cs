@@ -1,7 +1,9 @@
+using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
@@ -19,8 +21,8 @@ public class OrdersController : ControllerBase
     private readonly IEmailService _emails;
     private readonly ISmsService _sms;
 
-    private const decimal FreeDeliveryThreshold = 5000;
-    private const decimal StandardDeliveryFee = 120;
+    private const decimal FreeDeliveryThreshold = 5000m;
+    private const decimal StandardDeliveryFee = 120m;
 
     public OrdersController(IOrderRepository orders, IProductRepository products,
         OrderEventService events, IEmailService emails, ISmsService sms)
@@ -33,6 +35,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("OrderPolicy")]
     public async Task<ActionResult<Order>> Place(PlaceOrderRequest req, CancellationToken ct)
     {
         if (req.Customer is null || string.IsNullOrWhiteSpace(req.Customer.Name) ||
@@ -43,7 +46,13 @@ public class OrdersController : ControllerBase
         if (req.Items is null || req.Items.Count == 0)
             return BadRequest(new { message = "Cart is empty" });
 
-        var method = req.PaymentMethod?.ToLowerInvariant();
+        var normalizedPhone = NormalizePhone(req.Customer.Phone);
+        if (normalizedPhone.Length != 11 ||
+            !normalizedPhone.StartsWith("01", StringComparison.Ordinal) ||
+            normalizedPhone[2] is < '3' or > '9')
+            return BadRequest(new { message = "A valid Bangladeshi mobile number is required" });
+
+        var method = req.PaymentMethod?.Trim().ToLowerInvariant();
         if (method is not ("cod" or "bkash"))
             return BadRequest(new { message = "Payment method must be 'cod' or 'bkash'" });
 
@@ -53,10 +62,12 @@ public class OrdersController : ControllerBase
         var items = new List<OrderItem>();
         foreach (var line in req.Items)
         {
-            var qty = Math.Clamp(line.Qty, 1, 50);
+            if (string.IsNullOrWhiteSpace(line.ProductId) || line.Qty < 1 || line.Qty > 50)
+                return BadRequest(new { message = "Each cart item must have a valid product and quantity (1–50)" });
+
             var product = await _products.GetAsync(line.ProductId, ct);
             if (product is null)
-                return BadRequest(new { message = $"Product not found: {line.ProductId}" });
+                return BadRequest(new { message = "One or more selected products are unavailable" });
 
             if (product.Stock == "out-of-stock")
                 return BadRequest(new { message = $"'{product.Name}' is out of stock" });
@@ -68,24 +79,22 @@ public class OrdersController : ControllerBase
                 Brand = product.Brand,
                 Category = product.Category,
                 Price = product.Price,
-                Qty = qty,
+                Qty = line.Qty,
                 Colour = line.Colour,
             });
         }
 
-        var subtotal = items.Sum(i => i.Price * i.Qty);
-        var deliveryFee = subtotal >= FreeDeliveryThreshold ? 0 : StandardDeliveryFee;
+        var subtotal = items.Sum(item => item.Price * item.Qty);
+        var deliveryFee = subtotal >= FreeDeliveryThreshold ? 0m : StandardDeliveryFee;
 
         var order = new Order
         {
             OrderNo = GenerateOrderNo(),
-            UserId = User.Identity?.IsAuthenticated == true
-                ? User.FindFirstValue("sub")
-                : null,
+            UserId = User.Identity?.IsAuthenticated == true ? User.FindFirstValue("sub") : null,
             Customer = new CustomerInfo
             {
                 Name = req.Customer.Name.Trim(),
-                Phone = req.Customer.Phone.Trim(),
+                Phone = normalizedPhone,
                 Email = req.Customer.Email?.Trim(),
                 Address = req.Customer.Address.Trim(),
                 City = req.Customer.City?.Trim(),
@@ -97,7 +106,7 @@ public class OrdersController : ControllerBase
             DeliveryFee = deliveryFee,
             Total = subtotal + deliveryFee,
             PaymentMethod = method,
-            BkashTrxId = method == "bkash" ? req.BkashTrxId.Trim() : null,
+            BkashTrxId = method == "bkash" ? req.BkashTrxId?.Trim() : null,
             Status = method == "bkash" ? "awaiting-verification" : "pending",
         };
 
@@ -111,53 +120,53 @@ public class OrdersController : ControllerBase
         });
 
         await _orders.CreateAsync(order, ct);
-
-        // Send confirmation email & SMS
-        await SendOrderConfirmation(order);
+        await SendOrderConfirmation(order, ct);
 
         return CreatedAtAction(nameof(Track), new { orderNo = order.OrderNo }, order);
     }
 
-    private async Task SendOrderConfirmation(Order order)
+    private async Task SendOrderConfirmation(Order order, CancellationToken ct)
     {
-        var email = order.Customer.Email;
-        var phone = order.Customer.Phone;
-
-        // Email confirmation
-        if (!string.IsNullOrEmpty(email))
+        if (!string.IsNullOrWhiteSpace(order.Customer.Email))
         {
-            var subject = "NexusPlay Order Confirmation";
-            var body = $"""
-               <html>
-                 <body>
-                   <h2>🎉 Thank you for your order, {order.Customer.Name}!</h2>
-                   <p>Your order has been received.</p>
-                   <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
-                     <tr><td style="padding: 8px;"><strong>Order Number</strong></td><td style="padding: 8px;"><strong>{order.OrderNo}</strong></td></tr>
-                     <tr><td style="padding: 8px;"><strong>Payment Method</strong></td><td style="padding: 8px;">{order.PaymentMethod}</td></tr>
-                     <tr><td style="padding: 8px;"><strong>Total</strong></td><td style="padding: 8px;">BDT {order.Total:N2}</td></tr>
-                   </table>
-                   <p><strong>Track your order:</strong> <a href="https://nexusplay.com/track?orderNo={order.OrderNo}">https://nexusplay.com/track?orderNo={order.OrderNo}</a></p>
-                   <p><strong>Delivery:</strong> {order.Customer.Address}{(order.Customer.City != null ? $", {order.Customer.City}" : "")}{(order.Customer.Area != null ? $", {order.Customer.Area}" : "")}</p>
-                   {(order.Customer.Email != null ? $"<p><strong>Contact:</strong> {order.Customer.Email}</p>" : "")}
-                 </body>
-               </html>
-               """;
+            static string Encode(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+            var customerName = Encode(order.Customer.Name);
+            var orderNo = Encode(order.OrderNo);
+            var paymentMethod = Encode(order.PaymentMethod);
+            var address = Encode(order.Customer.Address);
+            var city = Encode(order.Customer.City);
+            var area = Encode(order.Customer.Area);
+            var customerEmail = Encode(order.Customer.Email);
 
-            await _emails.SendAsync(email, subject, body);
+            var body = $"""
+                <html>
+                  <body>
+                    <h2>Thank you for your order, {customerName}!</h2>
+                    <p>Your order has been received.</p>
+                    <table style="border-collapse:collapse;width:100%;margin:20px 0;">
+                      <tr><td><strong>Order Number</strong></td><td>{orderNo}</td></tr>
+                      <tr><td><strong>Payment Method</strong></td><td>{paymentMethod}</td></tr>
+                      <tr><td><strong>Total</strong></td><td>BDT {order.Total:N2}</td></tr>
+                    </table>
+                    <p><strong>Delivery:</strong> {address}{(string.IsNullOrEmpty(city) ? "" : $", {city}")}{(string.IsNullOrEmpty(area) ? "" : $", {area}")}</p>
+                    <p><strong>Contact:</strong> {customerEmail}</p>
+                  </body>
+                </html>
+                """;
+
+            await _emails.SendAsync(order.Customer.Email, "NexusPlay Order Confirmation", body, ct);
         }
 
-        // SMS confirmation
-        if (!string.IsNullOrEmpty(phone))
+        if (!string.IsNullOrWhiteSpace(order.Customer.Phone))
         {
-            var smsBody = $"NexusPlay Order Confirmed: {order.OrderNo} · Total BDT {order.Total:N2}";
-            await _sms.SendAsync(phone, smsBody);
+            var smsBody = $"NexusPlay order received: {order.OrderNo}. Total BDT {order.Total:N2}.";
+            await _sms.SendAsync(order.Customer.Phone, smsBody, ct);
         }
     }
 
     [HttpGet("track")]
-    public async Task<ActionResult<Order>> Track([FromQuery] string orderNo,
-        [FromQuery] string phone, CancellationToken ct)
+    public async Task<ActionResult<Order>> Track(
+        [FromQuery] string orderNo, [FromQuery] string phone, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(phone))
             return BadRequest(new { message = "orderNo and phone are required" });
@@ -175,21 +184,24 @@ public class OrdersController : ControllerBase
         var order = await _orders.FindByOrderNoAsync(orderNo, ct);
         if (order is null)
         {
-            HttpContext.Response.StatusCode = 404;
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
             await HttpContext.Response.WriteAsync("Order not found", ct);
             return;
         }
 
-        HttpContext.Response.StatusCode = 200;
+        HttpContext.Response.StatusCode = StatusCodes.Status200OK;
         HttpContext.Response.Headers["Content-Type"] = "text/event-stream";
         HttpContext.Response.Headers["Cache-Control"] = "no-cache";
         HttpContext.Response.Headers["Connection"] = "keep-alive";
         HttpContext.Response.Headers["X-Accel-Buffering"] = "no";
 
-        var initial = "event: order-status" + "\n" +
-                      "data: {\"status\":\"" + order.Status +
-                      "\",\"note\":\"Stream connected\",\"at\":\"" + DateTime.UtcNow.ToString("o") + "\"}" + "\n\n";
-        await HttpContext.Response.WriteAsync(initial, ct);
+        var initialPayload = JsonSerializer.Serialize(new
+        {
+            status = order.Status,
+            note = "Stream connected",
+            at = DateTime.UtcNow,
+        });
+        await HttpContext.Response.WriteAsync($"event: order-status\ndata: {initialPayload}\n\n", ct);
         await HttpContext.Response.Body.FlushAsync(ct);
 
         await foreach (var evt in _events.SubscribeAsync(orderNo, ct))
@@ -201,28 +213,23 @@ public class OrdersController : ControllerBase
 
     [Authorize]
     [HttpGet("my")]
-    public async Task<ActionResult<PagedResult<Order>>> My([FromQuery] int page = 1,
-        CancellationToken ct = default)
+    public async Task<ActionResult<PagedResult<Order>>> My(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
         var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var all = await _orders.SearchAsync(new OrderQuery { Page = 1, PageSize = 100 }, ct);
-        var mine = all.Items.Where(o => o.UserId == userId).ToList();
-
-        return Ok(new PagedResult<Order>
-        {
-            Items = mine,
-            Total = mine.Count,
-            Page = page,
-            PageSize = 100,
-        });
+        var mine = await _orders.SearchForUserAsync(userId, page, pageSize, ct);
+        return Ok(mine);
     }
+
+    private static string NormalizePhone(string phone) =>
+        new(phone.Where(char.IsDigit).ToArray());
 
     private static string GenerateOrderNo()
     {
         var stamp = DateTime.UtcNow.ToString("yyMMdd");
-        var suffix = Random.Shared.Next(1000, 10000);
+        var suffix = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
         return $"NP{stamp}{suffix}";
     }
 }

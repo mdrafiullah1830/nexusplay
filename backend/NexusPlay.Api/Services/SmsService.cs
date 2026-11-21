@@ -4,69 +4,93 @@ using Microsoft.Extensions.Configuration;
 
 namespace NexusPlay.Api.Services;
 
-/// <summary>
-/// SMS gateway abstraction with HTTP-based providers.
-/// Configure with Sms:Provider and Sms:ApiKey in appsettings.json.
-/// Supported providers: twilio (default), or any HTTP POST gateway.
-/// </summary>
 public interface ISmsService
 {
     Task SendAsync(string to, string message, CancellationToken ct = default);
 }
 
+/// <summary>
+/// Optional Twilio SMS integration. It is disabled unless all credentials
+/// are provided through environment variables.
+/// </summary>
 public class SmsService : ISmsService
 {
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
+    private readonly ILogger<SmsService> _logger;
 
-    public SmsService(IConfiguration config, HttpClient http)
+    public SmsService(IConfiguration config, HttpClient http, ILogger<SmsService> logger)
     {
         _config = config;
         _http = http;
+        _logger = logger;
     }
 
     public async Task SendAsync(string to, string message, CancellationToken ct = default)
     {
-        // Check if SMS is configured
-        var senderId = _config["Sms:SenderId"] ?? "NEXUSPLAY";
+        var provider = _config["Sms:Provider"]?.Trim().ToLowerInvariant() ?? "disabled";
+        if (provider == "disabled")
+            return;
 
-        if (string.IsNullOrEmpty(senderId))
+        if (provider != "twilio")
         {
-            // SMS not configured - silently skip
+            _logger.LogWarning("SMS was not sent because provider {Provider} is unsupported.", provider);
             return;
         }
 
-        var url = _config["Sms:Endpoint"] ??
-                  $"https://api.twilio.com/2010-04-01/Accounts/{_config["Sms:AccountSid"]}/Messages.json";
-
-        if (false)
+        var accountSid = _config["Sms:AccountSid"];
+        var authToken = _config["Sms:AuthToken"];
+        var from = _config["Sms:From"];
+        if (string.IsNullOrWhiteSpace(accountSid) ||
+            string.IsNullOrWhiteSpace(authToken) ||
+            string.IsNullOrWhiteSpace(from))
         {
-            var accountSid = _config["Sms:AccountSid"] ?? string.Empty;
-            var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{accountSid}:{_config["Sms:ApiKey"]}"));
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", auth);
+            _logger.LogWarning("SMS was not sent because Twilio credentials are incomplete.");
+            return;
+        }
 
-            var formPayload = new Dictionary<string, string>
+        var destination = NormalizeDestination(to);
+        var endpoint = $"https://api.twilio.com/2010-04-01/Accounts/{Uri.EscapeDataString(accountSid)}/Messages.json";
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                ["From"] = senderId,
-                ["To"] = to,
+                ["From"] = from,
+                ["To"] = destination,
                 ["Body"] = message,
-            };
-            var payload = new FormUrlEncodedContent(formPayload);
+            }),
+        };
 
-            await _http.PostAsync(url, payload, ct);
-        }
-        else
+        var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{accountSid}:{authToken}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
+
+        try
         {
-            var formPayload = new Dictionary<string, string>
-            {
-                ["from"] = senderId,
-                ["to"] = to,
-                ["message"] = message,
-            };
-            var payload = new FormUrlEncodedContent(formPayload);
-
-            await _http.PostAsync(url, payload, ct);
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+                _logger.LogWarning("Twilio rejected an order notification (HTTP {StatusCode}).", (int)response.StatusCode);
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send order confirmation SMS.");
+        }
+    }
 
-}
+    private static string NormalizeDestination(string phone)
+    {
+        var trimmed = phone.Trim();
+        if (trimmed.StartsWith('+')) return trimmed;
+
+        var digits = new string(trimmed.Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("880", StringComparison.Ordinal) && digits.Length == 13)
+            return $"+{digits}";
+        if (digits.StartsWith("01", StringComparison.Ordinal) && digits.Length == 11)
+            return $"+88{digits}";
+
+        return trimmed;
+    }
 }

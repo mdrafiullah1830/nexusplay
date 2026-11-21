@@ -2,8 +2,14 @@
 // NEXUSPLAY — API client (fetch wrapper)
 // ============================================================
 
-const BASE: string = (import.meta as ImportMeta & { env?: Record<string, string> }).env
-  ?.VITE_API_URL ?? "/api";
+const BASE: string = (
+  (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_URL ?? "/api"
+).replace(/\/+$/, "");
+
+export function apiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE}${normalizedPath}`;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -28,7 +34,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const isFormData = options.body instanceof FormData;
 
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: options.method ?? "GET",
     headers: isFormData ? headers : { ...headers, "Content-Type": "application/json" },
     body: isFormData ? (options.body as FormData) : (options.body !== undefined ? JSON.stringify(options.body) : undefined),

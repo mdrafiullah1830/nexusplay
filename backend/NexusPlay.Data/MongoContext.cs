@@ -18,34 +18,53 @@ public class MongoContext
     public IMongoCollection<AppUser> Users => Db.GetCollection<AppUser>("users");
     public IMongoCollection<WishlistItem> Wishlists => Db.GetCollection<WishlistItem>("wishlists");
 
-    /// <summary>Creates indexes required by the app (idempotent).</summary>
     public async Task EnsureIndexesAsync(CancellationToken ct = default)
     {
-        var orderKeys = Builders<Order>.IndexKeys
-            .Ascending(o => o.OrderNo)
-            .Ascending(o => o.Customer.Phone)
-            .Descending(o => o.CreatedAt);
+        // Old order numbers used a short random suffix, so an existing database
+        // could contain duplicates. Only create the unique index when safe.
+        var duplicateOrderNo = await Orders.Aggregate()
+            .Group(order => order.OrderNo,
+                group => new { OrderNo = group.Key, Count = group.Count() })
+            .Match(group => group.Count > 1)
+            .FirstOrDefaultAsync(ct);
 
-        await Orders.Indexes.CreateManyAsync(new[]
+        if (duplicateOrderNo is null)
         {
-            new CreateIndexModel<Order>(orderKeys,
-                new CreateIndexOptions { Unique = true, Name = "ix_orderno" }),
-            new CreateIndexModel<Order>(Builders<Order>.IndexKeys.Descending(o => o.CreatedAt)),
-        }, ct);
+            await Orders.Indexes.CreateOneAsync(
+                new CreateIndexModel<Order>(
+                    Builders<Order>.IndexKeys.Ascending(order => order.OrderNo),
+                    new CreateIndexOptions { Unique = true, Name = "ux_orderno" }),
+                cancellationToken: ct);
+        }
+        else
+        {
+            Console.Error.WriteLine(
+                "[startup] Duplicate legacy order numbers detected. The unique order-number index was not created; resolve duplicates before re-enabling it.");
+        }
+
+        await Orders.Indexes.CreateOneAsync(
+            new CreateIndexModel<Order>(
+                Builders<Order>.IndexKeys.Ascending(order => order.UserId)
+                    .Descending(order => order.CreatedAt),
+                new CreateIndexOptions { Name = "ix_user_created" }),
+            cancellationToken: ct);
+
+        await Orders.Indexes.CreateOneAsync(
+            new CreateIndexModel<Order>(
+                Builders<Order>.IndexKeys.Descending(order => order.CreatedAt)),
+            cancellationToken: ct);
 
         await Users.Indexes.CreateOneAsync(
             new CreateIndexModel<AppUser>(
-                Builders<AppUser>.IndexKeys.Ascending(u => u.Email),
+                Builders<AppUser>.IndexKeys.Ascending(user => user.Email),
                 new CreateIndexOptions { Unique = true, Name = "ux_email" }),
             cancellationToken: ct);
 
-        // One saved product per user — the unique index is also what makes
-        // POST /api/wishlist idempotent at the database level.
         await Wishlists.Indexes.CreateOneAsync(
             new CreateIndexModel<WishlistItem>(
                 Builders<WishlistItem>.IndexKeys
-                    .Ascending(w => w.UserId)
-                    .Ascending(w => w.ProductId),
+                    .Ascending(item => item.UserId)
+                    .Ascending(item => item.ProductId),
                 new CreateIndexOptions { Unique = true, Name = "ux_user_product" }),
             cancellationToken: ct);
     }

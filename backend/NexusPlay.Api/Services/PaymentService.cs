@@ -1,26 +1,32 @@
-using System.Security.Cryptography;
-using System.Text;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using NexusPlay.Core.Models;
 
 namespace NexusPlay.Api.Services;
 
-/// <summary>
-/// Payment gateway abstraction.
-/// Currently wired for SSLCOMMERZ (Bangladesh) with sandbox support.
-/// Set SslCommerz:Mode=sandbox in appsettings for test mode.
-/// </summary>
 public interface IPaymentService
 {
-    Task<PaymentInitiationResult> InitiateAsync(Order order, string callbackUrl, string cancelUrl, string ipnUrl, CancellationToken ct = default);
-    Task<bool> ProcessIpnAsync(Dictionary<string, string> payload, CancellationToken ct = default);
-    Task<PaymentVerificationResult> VerifyAsync(string transactionId, CancellationToken ct = default);
+    Task<PaymentInitiationResult> InitiateAsync(
+        Order order, string callbackUrl, string cancelUrl, string ipnUrl,
+        CancellationToken ct = default);
+    Task<PaymentVerificationResult> ProcessIpnAsync(
+        Dictionary<string, string> payload, CancellationToken ct = default);
+    Task<PaymentVerificationResult> VerifyAsync(string validationId, CancellationToken ct = default);
 }
 
-public record PaymentInitiationResult(bool Success, string? GatewayUrl, string? Error, string? SessionId);
+public record PaymentInitiationResult(
+    bool Success, string? GatewayUrl, string? Error, string? SessionId);
 
-public record PaymentVerificationResult(bool Success, string Status, string TransactionId, decimal Amount, string? Error);
+public record PaymentVerificationResult(
+    bool Success,
+    string Status,
+    string TransactionId,
+    string OrderNo,
+    decimal Amount,
+    string Currency,
+    string RiskLevel,
+    string? Error);
 
 public class PaymentService : IPaymentService
 {
@@ -33,20 +39,35 @@ public class PaymentService : IPaymentService
         _http = http;
     }
 
-    private string StoreId => _config["SslCommerz:StoreId"] ?? "nexusplay_demo";
-    private string StorePassword => _config["SslCommerz:StorePassword"] ?? "demo_password";
-    private bool IsSandbox => string.Equals(_config["SslCommerz:Mode"], "sandbox", StringComparison.OrdinalIgnoreCase);
+    private string StoreId => _config["SslCommerz:StoreId"] ?? string.Empty;
+    private string StorePassword => _config["SslCommerz:StorePassword"] ?? string.Empty;
+    private bool IsSandbox =>
+        string.Equals(_config["SslCommerz:Mode"], "sandbox", StringComparison.OrdinalIgnoreCase);
     private string BaseUrl => IsSandbox
         ? "https://sandbox.sslcommerz.com"
         : "https://securepay.sslcommerz.com";
 
-    public async Task<PaymentInitiationResult> InitiateAsync(Order order, string callbackUrl, string cancelUrl, string ipnUrl, CancellationToken ct = default)
+    private bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(StoreId) &&
+        !string.IsNullOrWhiteSpace(StorePassword);
+
+    public async Task<PaymentInitiationResult> InitiateAsync(
+        Order order, string callbackUrl, string cancelUrl, string ipnUrl,
+        CancellationToken ct = default)
     {
+        if (!IsConfigured)
+            return new PaymentInitiationResult(false, null,
+                "SSLCOMMERZ credentials are not configured.", null);
+
+        if (order.Total < 10m || order.Total > 500000m)
+            return new PaymentInitiationResult(false, null,
+                "SSLCOMMERZ supports payments from BDT 10 to BDT 500,000.", null);
+
         var payload = new Dictionary<string, string>
         {
             ["store_id"] = StoreId,
             ["store_passwd"] = StorePassword,
-            ["total_amount"] = order.Total.ToString("F2"),
+            ["total_amount"] = order.Total.ToString("F2", CultureInfo.InvariantCulture),
             ["currency"] = "BDT",
             ["tran_id"] = order.OrderNo,
             ["success_url"] = callbackUrl,
@@ -65,79 +86,124 @@ public class PaymentService : IPaymentService
             ["product_profile"] = "physical-goods",
         };
 
-        var content = new FormUrlEncodedContent(payload);
-        var response = await _http.PostAsync($"{BaseUrl}/gwprocess/v3/api.php", content, ct);
-        var responseBody = await response.Content.ReadAsStringAsync(ct);
-
-        var result = ParseInitiationResponse(responseBody);
-
-        if (!result.Success)
+        try
         {
-            return new PaymentInitiationResult(false, null, result.Error, null);
-        }
+            using var response = await _http.PostAsync(
+                $"{BaseUrl}/gwprocess/v4/api.php",
+                new FormUrlEncodedContent(payload), ct);
 
-        return new PaymentInitiationResult(true, result.GatewayUrl, null, result.SessionId);
+            if (!response.IsSuccessStatusCode)
+                return new PaymentInitiationResult(false, null,
+                    "Payment gateway is temporarily unavailable.", null);
+
+            var responseBody = await response.Content.ReadAsStringAsync(ct);
+            return ParseInitiationResponse(responseBody);
+        }
+        catch (HttpRequestException)
+        {
+            return new PaymentInitiationResult(false, null,
+                "Could not connect to the payment gateway.", null);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return new PaymentInitiationResult(false, null,
+                "Payment gateway request timed out.", null);
+        }
     }
 
-    public async Task<bool> ProcessIpnAsync(Dictionary<string, string> payload, CancellationToken ct = default)
+    public async Task<PaymentVerificationResult> ProcessIpnAsync(
+        Dictionary<string, string> payload, CancellationToken ct = default)
     {
-        if (!payload.TryGetValue("tran_id", out var _) ||
-            !payload.TryGetValue("status", out var _) ||
-            !payload.TryGetValue("val_id", out var _))
+        if (!payload.TryGetValue("tran_id", out var postedOrderNo) ||
+            !payload.TryGetValue("status", out var postedStatus) ||
+            !payload.TryGetValue("val_id", out var validationId) ||
+            !payload.TryGetValue("amount", out var postedAmount) ||
+            !payload.TryGetValue("currency", out var postedCurrency) ||
+            !IsSuccessStatus(postedStatus) ||
+            !decimal.TryParse(postedAmount, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) ||
+            !string.Equals(postedCurrency, "BDT", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            return Failed(ValidationIdOrEmpty(payload), "Invalid IPN payload.");
         }
 
-        if (IsSandbox)
+        var verified = await VerifyAsync(validationId, ct);
+        if (!verified.Success)
+            return verified;
+
+        if (!string.Equals(verified.OrderNo, postedOrderNo, StringComparison.Ordinal) ||
+            Math.Abs(verified.Amount - amount) >= 0.01m ||
+            !string.Equals(verified.Currency, "BDT", StringComparison.OrdinalIgnoreCase))
         {
-            var verify = await VerifyAsync(payload["val_id"]!, ct);
-            if (!verify.Success) return false;
+            return Failed(validationId, "IPN data does not match the verified transaction.");
         }
 
-        return true;
+        return verified;
     }
 
-    public async Task<PaymentVerificationResult> VerifyAsync(string transactionId, CancellationToken ct = default)
+    public async Task<PaymentVerificationResult> VerifyAsync(
+        string validationId, CancellationToken ct = default)
     {
-        var payload = new Dictionary<string, string>
-        {
-            ["store_id"] = StoreId,
-            ["store_passwd"] = StorePassword,
-            ["val_id"] = transactionId,
-            ["format"] = "json",
-        };
+        if (!IsConfigured)
+            return Failed(validationId, "SSLCOMMERZ credentials are not configured.");
+        if (string.IsNullOrWhiteSpace(validationId) || validationId.Length > 256)
+            return Failed(validationId ?? string.Empty, "Invalid validation ID.");
 
-        var content = new FormUrlEncodedContent(payload);
-        var response = await _http.PostAsync($"{BaseUrl}/gwprocess/v3/api.php", content, ct);
-        var responseBody = await response.Content.ReadAsStringAsync(ct);
+        var url = $"{BaseUrl}/validator/api/validationserverAPI.php" +
+            $"?val_id={Uri.EscapeDataString(validationId)}" +
+            $"&store_id={Uri.EscapeDataString(StoreId)}" +
+            $"&store_passwd={Uri.EscapeDataString(StorePassword)}&format=json";
 
         try
         {
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
+            using var response = await _http.GetAsync(url, ct);
+            if (!response.IsSuccessStatusCode)
+                return Failed(validationId, "Payment validation service returned an error.");
 
-            var status = root.TryGetProperty("status", out var s) ? s.GetString() ?? "failed" : "failed";
-            var amount = root.TryGetProperty("amount", out var a) ? a.GetDecimal() : 0;
-            var storeId = root.TryGetProperty("store_id", out var sid) ? sid.GetString() ?? string.Empty : string.Empty;
+            var body = await response.Content.ReadAsStringAsync(ct);
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
 
-            if (!string.Equals(storeId, StoreId, StringComparison.OrdinalIgnoreCase))
-            {
-                return new PaymentVerificationResult(false, "failed", transactionId, 0, "Store ID mismatch");
-            }
+            var status = ReadString(root, "status");
+            var responseValidationId = ReadString(root, "val_id");
+            var orderNo = ReadString(root, "tran_id");
+            var currency = ReadString(root, "currency");
+            var currencyType = ReadString(root, "currency_type");
+            var amount = ReadDecimal(root, "amount");
+            var riskLevel = ReadString(root, "risk_level");
 
-            var success = string.Equals(status, "VALID", StringComparison.OrdinalIgnoreCase) ||
-                          string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase);
+            var valid = IsSuccessStatus(status) &&
+                string.Equals(responseValidationId, validationId, StringComparison.Ordinal) &&
+                !string.IsNullOrWhiteSpace(orderNo) &&
+                amount > 0 &&
+                string.Equals(currency, "BDT", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(currencyType, "BDT", StringComparison.OrdinalIgnoreCase) &&
+                riskLevel == "0";
 
             return new PaymentVerificationResult(
-                success,
-                success ? "paid" : "failed",
-                transactionId,
+                valid,
+                valid ? "paid" : "failed",
+                validationId,
+                orderNo,
                 amount,
-                success ? null : "Payment verification failed");
+                currency,
+                riskLevel,
+                valid ? null : "Payment validation failed or transaction requires manual risk review.");
         }
-        catch (Exception ex)
+        catch (HttpRequestException)
         {
-            return new PaymentVerificationResult(false, "error", transactionId, 0, ex.Message);
+            return Failed(validationId, "Could not connect to the payment validation service.");
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return Failed(validationId, "Payment validation request timed out.");
+        }
+        catch (JsonException)
+        {
+            return Failed(validationId, "Payment validation returned an invalid response.");
+        }
+        catch (InvalidOperationException)
+        {
+            return Failed(validationId, "Payment validation response is incomplete.");
         }
     }
 
@@ -145,35 +211,55 @@ public class PaymentService : IPaymentService
     {
         try
         {
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+            var status = ReadString(root, "status");
+            var gatewayUrl = ReadString(root, "GatewayPageURL");
+            var sessionId = ReadString(root, "sessionkey");
 
-            var status = root.TryGetProperty("status", out var s) ? s.GetString() ?? string.Empty : string.Empty;
-            var gatewayUrl = root.TryGetProperty("GatewayPageURL", out var u) ? u.GetString() : null;
-            var sessionId = root.TryGetProperty("sessionkey", out var k) ? k.GetString() : null;
-            var error = root.TryGetProperty("error", out var e) ? e.GetString() : null;
-
-            if (string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase) && gatewayUrl != null)
+            if (!string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase) ||
+                !Uri.TryCreate(gatewayUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                !(uri.Host.Equals("sslcommerz.com", StringComparison.OrdinalIgnoreCase) ||
+                  uri.Host.EndsWith(".sslcommerz.com", StringComparison.OrdinalIgnoreCase)))
             {
-                return new PaymentInitiationResult(true, gatewayUrl, null, sessionId);
+                return new PaymentInitiationResult(false, null,
+                    "Payment gateway could not create a secure checkout session.", null);
             }
 
-            return new PaymentInitiationResult(false, null, error ?? "Initiation failed", null);
+            return new PaymentInitiationResult(true, uri.ToString(), null, sessionId);
         }
-        catch
+        catch (JsonException)
         {
-            if (body.Contains("GatewayPageURL") || body.Contains("https://"))
-            {
-                return new PaymentInitiationResult(true, body.Trim(), null, null);
-            }
-            return new PaymentInitiationResult(false, null, "Invalid gateway response", null);
+            return new PaymentInitiationResult(false, null,
+                "Payment gateway returned an invalid response.", null);
         }
     }
 
-    public static string GenerateSignature(string data, string secret)
+    private static bool IsSuccessStatus(string? status) =>
+        string.Equals(status, "VALID", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(status, "VALIDATED", StringComparison.OrdinalIgnoreCase);
+
+    private static string ReadString(JsonElement root, string name)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        if (!root.TryGetProperty(name, out var value)) return string.Empty;
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.ToString();
     }
+
+    private static decimal ReadDecimal(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var value)) return 0m;
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetDecimal(out var number))
+            return number;
+        return decimal.TryParse(value.ToString(), NumberStyles.Number,
+            CultureInfo.InvariantCulture, out var parsed) ? parsed : 0m;
+    }
+
+    private static string ValidationIdOrEmpty(Dictionary<string, string> payload) =>
+        payload.TryGetValue("val_id", out var value) ? value : string.Empty;
+
+    private static PaymentVerificationResult Failed(string validationId, string error) =>
+        new(false, "failed", validationId, string.Empty, 0m, string.Empty, string.Empty, error);
 }

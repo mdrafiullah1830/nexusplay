@@ -17,8 +17,14 @@ public class TokenService
     {
         _issuer = config["Jwt:Issuer"] ?? "nexusplay";
         _audience = config["Jwt:Audience"] ?? "nexusplay-app";
-        _secret = config["Jwt:Secret"] ?? "nexusplay-dev-secret-key-change-in-production-0123456789";
-        _expiryMinutes = int.TryParse(config["Jwt:ExpiryMinutes"], out var m) ? m : 60 * 24 * 7;
+        _secret = config["Jwt:Secret"]
+            ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+        if (Encoding.UTF8.GetByteCount(_secret) < 32)
+            throw new InvalidOperationException("Jwt:Secret must be at least 32 bytes long.");
+
+        _expiryMinutes = int.TryParse(config["Jwt:ExpiryMinutes"], out var minutes)
+            ? Math.Clamp(minutes, 5, 60 * 24 * 30)
+            : 60 * 24 * 7;
     }
 
     public string CreateToken(AppUser user)
@@ -33,7 +39,7 @@ public class TokenService
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var now = DateTime.UtcNow;
 
         var token = new JwtSecurityToken(
@@ -42,7 +48,7 @@ public class TokenService
             claims: claims,
             notBefore: now,
             expires: now.AddMinutes(_expiryMinutes),
-            signingCredentials: creds);
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
