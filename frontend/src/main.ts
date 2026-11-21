@@ -4,6 +4,7 @@
 import "./styles/main.scss";
 
 import { initNavbar } from "./components/navbar";
+import { initTheme } from "./services/theme";
 import { initFooter } from "./components/footer";
 import { initHomePage } from "./pages/home";
 import { initShopPage } from "./pages/shop";
@@ -24,23 +25,7 @@ import {
 } from "./animations";
 import { initTilt3DDelegated, initMagnetic, initPressRippleDelegated } from "./animations/interaction/tilt-3d";
 
-// -- Theme initialization --------------------------------------------
-function initTheme(): void {
-  const saved = localStorage.getItem("nexusplay_theme") as "light" | "dark" | null;
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = saved ?? (prefersDark ? "dark" : "light");
-
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("nexusplay_theme", theme);
-}
-
-function toggleTheme(): void {
-  const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("nexusplay_theme", next);
-}
-
+// Theme selection is persisted by the shared theme service.
 // -- Initialize all animation systems ----------------------------------
 async function initAnimationSystems(): Promise<void> {
   const page = document.body.dataset.page;
@@ -149,5 +134,3 @@ document.addEventListener("DOMContentLoaded", async () => {
       break;
   }
 });
-
-export { toggleTheme };

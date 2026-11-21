@@ -12,4 +12,7 @@
 @use "header-extras";
 @use "animations-core"; // animation tokens, keyframes, utilities
 @use "signal"; // NexusPlay Signal / Precision homepage identity
+@use "experience"; // cinematic scroll-story section
 @use "3d" as *; // must stay last — overrides the partials above
+@use "blue-theme"; // final black / white / electric blue finish
+@use "theme-modes"; // persisted homepage dark / white mode
