@@ -1,7 +1,7 @@
 // ============================================================
 // NEXUSPLAY — Order tracking page
 // ============================================================
-import { api, ApiError } from "../services/api";
+import { api, apiUrl, ApiError } from "../services/api";
 import { formatBDT } from "../services/cart";
 import type { Order } from "../types";
 
@@ -166,7 +166,7 @@ export function initTrackPage(): void {
     if (eventSource) { eventSource.close(); eventSource = null; }
     if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
 
-    eventSource = new EventSource(`/api/orders/track/stream/${encodeURIComponent(orderNo)}`);
+    eventSource = new EventSource(apiUrl(`/orders/track/stream/${encodeURIComponent(orderNo)}`));
 
     eventSource.onopen = () => { result.querySelector(".shop-loading")?.remove(); };
 
