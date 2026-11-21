@@ -826,6 +826,59 @@ body[data-page="shop"] .shop-empty p { max-width: 360px; color: var(--shop-muted
   body[data-page="shop"] .shop-product-grid { grid-template-columns: 1fr; }
 }
 
+
+/* Dark-mode chrome for Shop (the homepage theme switch is shared). */
+body[data-page="shop"] .announce {
+  background: #050a13;
+  color: #9fc7ff;
+}
+body[data-page="shop"] .announce__item a { color: #b7d4ff; }
+body[data-page="shop"] .navbar {
+  background: rgba(5,8,15,.94);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  box-shadow: none;
+}
+body[data-page="shop"] .navbar__logo { color: #f7f9ff; }
+body[data-page="shop"] .navbar__logo span { color: #87b8ff; }
+body[data-page="shop"] .navbar__link,
+body[data-page="shop"] .navbar__icon-btn { color: #e7efff; }
+body[data-page="shop"] .navbar__link::after { background: #3385ff; }
+body[data-page="shop"] .megamenu,
+body[data-page="shop"] .mobile-menu,
+body[data-page="shop"] .search-panel,
+body[data-page="shop"] .account__menu {
+  background: #0b1422;
+  border-color: rgba(255,255,255,.12);
+  color: #f5f8ff;
+}
+body[data-page="shop"] .megamenu__col-title,
+body[data-page="shop"] .account__meta small,
+body[data-page="shop"] .account__meta span { color: #9aaac2; }
+body[data-page="shop"] .megamenu__item,
+body[data-page="shop"] .account__item,
+body[data-page="shop"] .mobile-menu__link,
+body[data-page="shop"] .mobile-menu__sub { color: #e7efff; }
+body[data-page="shop"] .megamenu__item:hover,
+body[data-page="shop"] .account__item:hover { background: #14243a; }
+body[data-page="shop"] .megamenu__promo {
+  background: #101d30;
+  background-image: none;
+}
+body[data-page="shop"] .megamenu__promo-text { color: #a9bad2; }
+body[data-page="shop"] .search-panel__field { background: #101d30; }
+body[data-page="shop"] .search-panel__field input { color: #f5f8ff; }
+body[data-page="shop"] .footer {
+  background: #03060b;
+  color: #dce6f8;
+}
+body[data-page="shop"] .footer__brand { color: #f7f9ff; }
+body[data-page="shop"] .footer__item,
+body[data-page="shop"] .footer__contact a { color: rgba(231,239,255,.78); }
+body[data-page="shop"] .footer__col-title,
+body[data-page="shop"] .footer__item:hover,
+body[data-page="shop"] .footer__contact a:hover { color: #75aaff; }
+body[data-page="shop"] .footer__bottom { border-color: rgba(255,255,255,.14); }
+
 /* WHITE MODE — keep all content and layout, change only the palette. */
 html[data-theme="light"] body[data-page="shop"] {
   --shop-bg: #f6f8fc;
