@@ -229,7 +229,7 @@ public class OrdersController : ControllerBase
     private static string GenerateOrderNo()
     {
         var stamp = DateTime.UtcNow.ToString("yyMMdd");
-        var suffix = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(4));
+        var suffix = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
         return $"NP{stamp}{suffix}";
     }
 }
