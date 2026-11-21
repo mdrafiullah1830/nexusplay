@@ -18,11 +18,6 @@ public interface IPaymentService
 public record PaymentInitiationResult(
     bool Success, string? GatewayUrl, string? Error, string? SessionId);
 
-/// <summary>
-/// A successful result means SSLCOMMERZ's server-side validation endpoint
-/// returned a valid transaction. OrderNo, amount and currency still have to
-/// be matched against the saved order by the controller.
-/// </summary>
 public record PaymentVerificationResult(
     bool Success,
     string Status,
@@ -30,6 +25,7 @@ public record PaymentVerificationResult(
     string OrderNo,
     decimal Amount,
     string Currency,
+    string RiskLevel,
     string? Error);
 
 public class PaymentService : IPaymentService
@@ -89,7 +85,7 @@ public class PaymentService : IPaymentService
         try
         {
             using var response = await _http.PostAsync(
-                $"{BaseUrl}/gwprocess/v3/api.php",
+                $"{BaseUrl}/gwprocess/v4/api.php",
                 new FormUrlEncodedContent(payload), ct);
 
             if (!response.IsSuccessStatusCode)
@@ -123,7 +119,7 @@ public class PaymentService : IPaymentService
             !decimal.TryParse(postedAmount, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) ||
             !string.Equals(postedCurrency, "BDT", StringComparison.OrdinalIgnoreCase))
         {
-            return Failed(validationId: validationIdOrEmpty(payload), "Invalid IPN payload.");
+            return Failed(ValidationIdOrEmpty(payload), "Invalid IPN payload.");
         }
 
         var verified = await VerifyAsync(validationId, ct);
@@ -148,19 +144,15 @@ public class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(validationId) || validationId.Length > 256)
             return Failed(validationId ?? string.Empty, "Invalid validation ID.");
 
-        var payload = new Dictionary<string, string>
-        {
-            ["store_id"] = StoreId,
-            ["store_passwd"] = StorePassword,
-            ["val_id"] = validationId,
-            ["format"] = "json",
-        };
+        // SSLCOMMERZ's order-validation endpoint is a GET endpoint.
+        var url = $"{BaseUrl}/validator/api/validationserverAPI.php" +
+            $"?val_id={Uri.EscapeDataString(validationId)}" +
+            $"&store_id={Uri.EscapeDataString(StoreId)}" +
+            $"&store_passwd={Uri.EscapeDataString(StorePassword)}&format=json";
 
         try
         {
-            using var response = await _http.PostAsync(
-                $"{BaseUrl}/ validator/api/validationserverAPI.php",
-                new FormUrlEncodedContent(payload), ct);
+            using var response = await _http.GetAsync(url, ct);
             if (!response.IsSuccessStatusCode)
                 return Failed(validationId, "Payment validation service returned an error.");
 
@@ -173,14 +165,19 @@ public class PaymentService : IPaymentService
             var storeId = ReadString(root, "store_id");
             var orderNo = ReadString(root, "tran_id");
             var currency = ReadString(root, "currency");
+            var currencyType = ReadString(root, "currency_type");
             var amount = ReadDecimal(root, "amount");
+            var riskLevel = ReadString(root, "risk_level");
 
             var valid = IsSuccessStatus(status) &&
                 string.Equals(storeId, StoreId, StringComparison.Ordinal) &&
                 string.Equals(responseValidationId, validationId, StringComparison.Ordinal) &&
                 !string.IsNullOrWhiteSpace(orderNo) &&
                 amount > 0 &&
-                string.Equals(currency, "BDT", StringComparison.OrdinalIgnoreCase);
+                string.Equals(currency, "BDT", StringComparison.OrdinalIgnoreCase) &&
+                (string.IsNullOrEmpty(currencyType) ||
+                 string.Equals(currencyType, "BDT", StringComparison.OrdinalIgnoreCase)) &&
+                riskLevel == "0";
 
             return new PaymentVerificationResult(
                 valid,
@@ -189,7 +186,8 @@ public class PaymentService : IPaymentService
                 orderNo,
                 amount,
                 currency,
-                valid ? null : "Payment validation failed.");
+                riskLevel,
+                valid ? null : "Payment validation failed or transaction requires manual risk review.");
         }
         catch (HttpRequestException)
         {
@@ -259,9 +257,9 @@ public class PaymentService : IPaymentService
             CultureInfo.InvariantCulture, out var parsed) ? parsed : 0m;
     }
 
-    private static string validationIdOrEmpty(Dictionary<string, string> payload) =>
+    private static string ValidationIdOrEmpty(Dictionary<string, string> payload) =>
         payload.TryGetValue("val_id", out var value) ? value : string.Empty;
 
     private static PaymentVerificationResult Failed(string validationId, string error) =>
-        new(false, "failed", validationId, string.Empty, 0m, string.Empty, error);
+        new(false, "failed", validationId, string.Empty, 0m, string.Empty, string.Empty, error);
 }
