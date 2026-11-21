@@ -191,12 +191,20 @@ public class PaymentsController : ControllerBase
         return Ok(new { received = true });
     }
 
-    [HttpGet("success")]
+    [AcceptVerbs("GET", "POST")]
+    [Route("success")]
     [AllowAnonymous]
     public async Task<ActionResult> Success(
-        [FromQuery] string orderNo, [FromQuery(Name = "val_id")] string? validationId,
+        [FromQuery] string? orderNo, [FromQuery(Name = "val_id")] string? validationId,
         CancellationToken ct)
     {
+        if (Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync(ct);
+            orderNo ??= form["orderNo"].FirstOrDefault() ?? form["tran_id"].FirstOrDefault();
+            validationId ??= form["val_id"].FirstOrDefault();
+        }
+
         if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(validationId))
             return BadRequest(new { message = "Missing payment confirmation details" });
 
@@ -236,10 +244,20 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    [HttpGet("fail")]
+    [AcceptVerbs("GET", "POST")]
+    [Route("fail")]
     [AllowAnonymous]
-    public async Task<ActionResult> Fail([FromQuery] string orderNo, CancellationToken ct)
+    public async Task<ActionResult> Fail([FromQuery] string? orderNo, CancellationToken ct)
     {
+        if (Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync(ct);
+            orderNo ??= form["orderNo"].FirstOrDefault() ?? form["tran_id"].FirstOrDefault();
+        }
+
+        if (string.IsNullOrWhiteSpace(orderNo))
+            return BadRequest(new { message = "Missing order number" });
+
         var order = await _orders.FindByOrderNoAsync(orderNo, ct);
         if (order is null)
             return NotFound(new { message = "Order not found" });
