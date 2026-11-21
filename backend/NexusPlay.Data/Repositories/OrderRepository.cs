@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using NexusPlay.Core.Interfaces;
@@ -25,19 +26,21 @@ public class OrderRepository : IOrderRepository
 
     public async Task<Order?> FindAsync(string orderNo, string phone, CancellationToken ct = default)
     {
-        var no = orderNo.Trim().ToUpperInvariant();
-        var ph = phone.Trim();
+        var normalizedOrderNo = orderNo.Trim().ToUpperInvariant();
+        var normalizedPhone = Regex.Replace(phone ?? string.Empty, @"\D", string.Empty);
 
+        // Exact phone match only. Suffix matching allows unrelated numbers to
+        // reveal an order and must never be used for public order tracking.
         return await _orders.Find(o =>
-                o.OrderNo == no &&
-                (o.Customer.Phone == ph || o.Customer.Phone.EndsWith(ph)))
+                o.OrderNo == normalizedOrderNo &&
+                o.Customer.Phone == normalizedPhone)
             .FirstOrDefaultAsync(ct);
     }
 
     public async Task<Order?> FindByOrderNoAsync(string orderNo, CancellationToken ct = default)
     {
-        var no = orderNo.Trim().ToUpperInvariant();
-        return await _orders.Find(o => o.OrderNo == no).FirstOrDefaultAsync(ct);
+        var normalizedOrderNo = orderNo.Trim().ToUpperInvariant();
+        return await _orders.Find(o => o.OrderNo == normalizedOrderNo).FirstOrDefaultAsync(ct);
     }
 
     public async Task<PagedResult<Order>> SearchAsync(OrderQuery q, CancellationToken ct = default)
@@ -52,16 +55,29 @@ public class OrderRepository : IOrderRepository
             var term = q.Q.Trim();
             filter &= Builders<Order>.Filter.Or(
                 Builders<Order>.Filter.Regex(o => o.OrderNo,
-                    new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(term), "i")),
+                    new BsonRegularExpression(Regex.Escape(term), "i")),
                 Builders<Order>.Filter.Regex(o => o.Customer.Phone,
-                    new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(term), "i")),
+                    new BsonRegularExpression(Regex.Escape(term), "i")),
                 Builders<Order>.Filter.Regex(o => o.Customer.Name,
-                    new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(term), "i")));
+                    new BsonRegularExpression(Regex.Escape(term), "i")));
         }
 
-        var page = Math.Max(1, q.Page);
-        var pageSize = Math.Clamp(q.PageSize, 1, 100);
+        return await QueryPageAsync(filter, q.Page, q.PageSize, ct);
+    }
 
+    public async Task<PagedResult<Order>> SearchForUserAsync(
+        string userId, int page, int pageSize, CancellationToken ct = default)
+    {
+        var filter = Builders<Order>.Filter.Eq(o => o.UserId, userId);
+        return await QueryPageAsync(filter, page, pageSize, ct);
+    }
+
+    private async Task<PagedResult<Order>> QueryPageAsync(
+        FilterDefinition<Order> filter, int requestedPage, int requestedPageSize,
+        CancellationToken ct)
+    {
+        var page = Math.Max(1, requestedPage);
+        var pageSize = Math.Clamp(requestedPageSize, 1, 100);
         var total = await _orders.CountDocumentsAsync(filter, cancellationToken: ct);
         var items = await _orders.Find(filter)
             .SortByDescending(o => o.CreatedAt)
@@ -69,7 +85,13 @@ public class OrderRepository : IOrderRepository
             .Limit(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<Order> { Items = items, Total = total, Page = page, PageSize = pageSize };
+        return new PagedResult<Order>
+        {
+            Items = items,
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+        };
     }
 
     public async Task<bool> UpdateAsync(Order order, CancellationToken ct = default)
@@ -91,7 +113,6 @@ public class OrderRepository : IOrderRepository
     {
         var filter = Builders<Order>.Filter.In(o => o.Status,
             new[] { "confirmed", "shipped", "delivered" });
-
         var totals = await _orders.Find(filter).Project(o => o.Total).ToListAsync(ct);
         return totals.Sum();
     }
