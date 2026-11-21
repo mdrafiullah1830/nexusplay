@@ -251,3 +251,18 @@ body[data-page="home"] .experience__mobile-media {
     animation: none;
   }
 }
+
+
+/* Preserve strong contrast in the existing dark-blue mode. */
+body[data-page="home"] .navbar__logo { color: #f7f9ff; }
+body[data-page="home"] .navbar__icon-btn { color: #e7efff; }
+body[data-page="home"] .section__title { color: #f7f9ff; }
+body[data-page="home"] .section__link { color: #e6edfa; }
+body[data-page="home"] .signal-support h2 { color: #f7f9ff; }
+body[data-page="home"] .signal-support__copy a {
+  border-bottom-color: rgba(159, 199, 255, 0.68);
+  color: #b7d4ff;
+}
+body[data-page="home"] .footer { color: #d8e2f4; }
+body[data-page="home"] .footer__item,
+body[data-page="home"] .footer__contact a { color: rgba(231, 239, 255, 0.78); }
