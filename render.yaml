@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: nexusplay1830
+    runtime: static
+    branch: main
+    autoDeployTrigger: commit
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
