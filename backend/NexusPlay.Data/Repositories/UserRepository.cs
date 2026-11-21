@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using NexusPlay.Core.Interfaces;
 using NexusPlay.Core.Models;
@@ -15,12 +17,15 @@ public class UserRepository : IUserRepository
 
     public async Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct = default)
     {
-        var normalized = email.Trim().ToLowerInvariant();
-        return await _users.Find(u => u.Email == normalized).FirstOrDefaultAsync(ct);
+        var normalized = email.Trim();
+        var filter = Builders<AppUser>.Filter.Regex(
+            user => user.Email,
+            new BsonRegularExpression($"^{Regex.Escape(normalized)}$", "i"));
+        return await _users.Find(filter).FirstOrDefaultAsync(ct);
     }
 
     public async Task<AppUser?> GetAsync(string id, CancellationToken ct = default) =>
-        await _users.Find(u => u.Id == id).FirstOrDefaultAsync(ct);
+        await _users.Find(user => user.Id == id).FirstOrDefaultAsync(ct);
 
     public async Task<AppUser> CreateAsync(AppUser user, CancellationToken ct = default)
     {
