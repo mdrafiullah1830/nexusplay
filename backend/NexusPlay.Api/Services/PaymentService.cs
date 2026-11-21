@@ -59,6 +59,10 @@ public class PaymentService : IPaymentService
             return new PaymentInitiationResult(false, null,
                 "SSLCOMMERZ credentials are not configured.", null);
 
+        if (order.Total < 10m || order.Total > 500000m)
+            return new PaymentInitiationResult(false, null,
+                "SSLCOMMERZ supports payments from BDT 10 to BDT 500,000.", null);
+
         var payload = new Dictionary<string, string>
         {
             ["store_id"] = StoreId,
@@ -144,7 +148,6 @@ public class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(validationId) || validationId.Length > 256)
             return Failed(validationId ?? string.Empty, "Invalid validation ID.");
 
-        // SSLCOMMERZ's order-validation endpoint is a GET endpoint.
         var url = $"{BaseUrl}/validator/api/validationserverAPI.php" +
             $"?val_id={Uri.EscapeDataString(validationId)}" +
             $"&store_id={Uri.EscapeDataString(StoreId)}" +
@@ -162,7 +165,6 @@ public class PaymentService : IPaymentService
 
             var status = ReadString(root, "status");
             var responseValidationId = ReadString(root, "val_id");
-            var storeId = ReadString(root, "store_id");
             var orderNo = ReadString(root, "tran_id");
             var currency = ReadString(root, "currency");
             var currencyType = ReadString(root, "currency_type");
@@ -170,13 +172,11 @@ public class PaymentService : IPaymentService
             var riskLevel = ReadString(root, "risk_level");
 
             var valid = IsSuccessStatus(status) &&
-                string.Equals(storeId, StoreId, StringComparison.Ordinal) &&
                 string.Equals(responseValidationId, validationId, StringComparison.Ordinal) &&
                 !string.IsNullOrWhiteSpace(orderNo) &&
                 amount > 0 &&
                 string.Equals(currency, "BDT", StringComparison.OrdinalIgnoreCase) &&
-                (string.IsNullOrEmpty(currencyType) ||
-                 string.Equals(currencyType, "BDT", StringComparison.OrdinalIgnoreCase)) &&
+                string.Equals(currencyType, "BDT", StringComparison.OrdinalIgnoreCase) &&
                 riskLevel == "0";
 
             return new PaymentVerificationResult(
