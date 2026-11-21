@@ -8,7 +8,7 @@ body[data-page="home"] .experience {
   overflow: clip;
   padding: clamp(4.5rem, 8vw, 8.5rem) clamp(1rem, 4vw, 3.5rem);
   background: #171b13;
-  color: #fffefa;
+  color: #f7f9ff;
   isolation: isolate;
 }
 
@@ -19,10 +19,10 @@ body[data-page="home"] .experience::before {
   right: -12rem;
   width: min(55vw, 760px);
   aspect-ratio: 1;
-  border: 1px solid rgba(205, 233, 67, 0.12);
+  border: 1px solid rgba(51, 133, 255, 0.12);
   border-radius: 50%;
   content: "";
-  box-shadow: 0 0 0 70px rgba(205, 233, 67, 0.025), 0 0 0 140px rgba(205, 233, 67, 0.018);
+  box-shadow: 0 0 0 70px rgba(51, 133, 255, 0.025), 0 0 0 140px rgba(51, 133, 255, 0.018);
 }
 
 .experience__intro,
@@ -44,7 +44,7 @@ body[data-page="home"] .experience::before {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 1rem;
-  color: #cde943;
+  color: #3385ff;
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.2em;
@@ -59,7 +59,7 @@ body[data-page="home"] .experience::before {
 
 body[data-page="home"] .experience__title {
   max-width: 850px;
-  color: #fffefa;
+  color: #f7f9ff;
   font-family: "Archivo", "Arial Black", sans-serif;
   font-size: clamp(2.7rem, 6.4vw, 6.2rem);
   font-weight: 900;
@@ -67,7 +67,7 @@ body[data-page="home"] .experience__title {
   line-height: 0.91;
 }
 
-.experience__title span { color: #cde943; }
+.experience__title span { color: #3385ff; }
 
 .experience__intro-copy {
   max-width: 390px;
@@ -107,7 +107,7 @@ body[data-page="home"] .experience__title {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: clamp(1.4rem, 3vw, 2.7rem);
-  color: #cde943;
+  color: #3385ff;
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -116,13 +116,13 @@ body[data-page="home"] .experience__title {
 .experience__step-index::after {
   width: 34px;
   height: 1px;
-  background: rgba(205, 233, 67, 0.52);
+  background: rgba(51, 133, 255, 0.52);
   content: "";
 }
 
 body[data-page="home"] .experience__step h3 {
   max-width: 560px;
-  color: #fffefa;
+  color: #f7f9ff;
   font-family: "Archivo", "Arial Black", sans-serif;
   font-size: clamp(2rem, 3.8vw, 3.65rem);
   font-weight: 800;
@@ -145,8 +145,8 @@ body[data-page="home"] .experience__step h3 {
   align-self: flex-start;
   margin-top: 1.8rem;
   padding-bottom: 0.45rem;
-  border-bottom: 1px solid rgba(205, 233, 67, 0.68);
-  color: #cde943;
+  border-bottom: 1px solid rgba(51, 133, 255, 0.68);
+  color: #3385ff;
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -169,10 +169,10 @@ body[data-page="home"] .experience__step h3 {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(205, 233, 67, 0.2);
+  border: 1px solid rgba(51, 133, 255, 0.2);
   background:
-    radial-gradient(ellipse at 50% 44%, rgba(205, 233, 67, 0.18), transparent 42%),
-    radial-gradient(ellipse at 50% 100%, rgba(205, 233, 67, 0.11), transparent 52%),
+    radial-gradient(ellipse at 50% 44%, rgba(51, 133, 255, 0.18), transparent 42%),
+    radial-gradient(ellipse at 50% 100%, rgba(51, 133, 255, 0.11), transparent 52%),
     linear-gradient(145deg, #252d1d 0%, #10140e 75%);
   isolation: isolate;
 }
@@ -181,7 +181,7 @@ body[data-page="home"] .experience__step h3 {
 .experience__stage::after {
   position: absolute;
   z-index: -1;
-  border: 1px solid rgba(205, 233, 67, 0.13);
+  border: 1px solid rgba(51, 133, 255, 0.13);
   border-radius: 50%;
   content: "";
   pointer-events: none;
@@ -195,8 +195,8 @@ body[data-page="home"] .experience__step h3 {
   z-index: -1;
   inset: 0;
   background:
-    linear-gradient(rgba(205, 233, 67, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(205, 233, 67, 0.07) 1px, transparent 1px);
+    linear-gradient(rgba(51, 133, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(51, 133, 255, 0.07) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at center, #000 15%, transparent 78%);
 }
@@ -245,15 +245,15 @@ body[data-page="home"] .experience__step h3 {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #cde943;
-  box-shadow: 0 0 12px rgba(205, 233, 67, 0.8);
+  background: #3385ff;
+  box-shadow: 0 0 12px rgba(51, 133, 255, 0.8);
   content: "";
 }
 
 .experience__stage-bottom {
   bottom: clamp(1rem, 2.5vw, 2rem);
   align-items: end;
-  color: #fffefa;
+  color: #f7f9ff;
 }
 
 .experience__stage-caption {
@@ -263,7 +263,7 @@ body[data-page="home"] .experience__step h3 {
 }
 
 .experience__stage-caption small {
-  color: #cde943;
+  color: #3385ff;
   font-size: 0.57rem;
   font-weight: 900;
   letter-spacing: 0.16em;
@@ -331,9 +331,9 @@ body[data-page="home"] .experience__step h3 {
     margin-bottom: 1.6rem;
     place-items: center;
     overflow: hidden;
-    border: 1px solid rgba(205, 233, 67, 0.18);
+    border: 1px solid rgba(51, 133, 255, 0.18);
     background:
-      radial-gradient(ellipse at center, rgba(205, 233, 67, 0.18), transparent 54%),
+      radial-gradient(ellipse at center, rgba(51, 133, 255, 0.18), transparent 54%),
       linear-gradient(145deg, #252d1d, #10140e);
   }
 
