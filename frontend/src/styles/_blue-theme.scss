@@ -1,0 +1,37 @@
+// Final black / white / electric-blue overrides; imported after the legacy 3D layer.
+
+/* Last-mile overrides for legacy 3D rules, loaded last. */
+body[data-page="home"] .hero__product-stage > img {
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 26px 42px rgba(0,0,0,.62)) drop-shadow(0 0 34px rgba(35,119,255,.2));
+}
+body[data-page="home"] .hero__media-top,
+body[data-page="home"] .hero__media-caption,
+body[data-page="home"] .hero__media-index,
+body[data-page="home"] .hero__hud-readout span,
+body[data-page="home"] .hero__hud-readout small { color: rgba(230,239,255,.76); }
+body[data-page="home"] .hero__hud-readout strong { color: #f7f9ff; }
+body[data-page="home"] .hero__corner--tl,
+body[data-page="home"] .hero__corner--tr,
+body[data-page="home"] .hero__corner--bl,
+body[data-page="home"] .hero__corner--br { border-color: #3385ff; }
+body[data-page="home"] .hero__reticle,
+body[data-page="home"] .hero__reticle b { border-color: rgba(112,174,255,.3); }
+body[data-page="home"] .hero__reticle::before,
+body[data-page="home"] .hero__reticle::after,
+body[data-page="home"] .hero__reticle i { background: rgba(112,174,255,.28); }
+body[data-page="home"] .hero__viewer-tools { border-color: rgba(91,157,255,.3); background: rgba(5,10,20,.78); }
+body[data-page="home"] .hero__viewer-tools > span { color: #b8c8e3; }
+body[data-page="home"] .hero__viewer-tools button {
+  border-color: rgba(91,157,255,.28);
+  background: rgba(255,255,255,.06);
+  color: #f7f9ff;
+}
+body[data-page="home"] .hero__viewer-tools button:hover,
+body[data-page="home"] .hero__viewer-tools button:focus-visible {
+  border-color: #3385ff;
+  background: #176bff;
+  color: #fff;
+}
+body[data-page="home"] .hero__media::after { border-color: rgba(91,157,255,.2); }
+body[data-page="home"] .hero__media::before { border-color: rgba(91,157,255,.2); }
