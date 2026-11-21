@@ -150,7 +150,7 @@ function mobileMenuMarkup(): string {
 
 // -- Header markup --------------------------------------------
 function renderHeader(root: HTMLElement): void {
-  const themeToggleMarkup = document.body.dataset.page === "home"
+  const themeToggleMarkup = ["home", "shop"].includes(document.body.dataset.page ?? "")
     ? `<button class="navbar__icon-btn navbar__theme-btn" id="theme-btn" type="button"
         aria-label="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
         title="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
