@@ -21,6 +21,7 @@ public interface IOrderRepository
     Task<Order?> FindAsync(string orderNo, string phone, CancellationToken ct = default);
     Task<Order?> FindByOrderNoAsync(string orderNo, CancellationToken ct = default);
     Task<PagedResult<Order>> SearchAsync(OrderQuery query, CancellationToken ct = default);
+    Task<PagedResult<Order>> SearchForUserAsync(string userId, int page, int pageSize, CancellationToken ct = default);
     Task<bool> UpdateAsync(Order order, CancellationToken ct = default);
     Task<long> CountAsync(CancellationToken ct = default);
     Task<long> CountByStatusAsync(string status, CancellationToken ct = default);
