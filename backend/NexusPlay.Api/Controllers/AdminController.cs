@@ -68,7 +68,7 @@ public class AdminController : ControllerBase
         if (string.IsNullOrWhiteSpace(product.Name))
             return BadRequest(new { message = "Name is required" });
 
-        product.Id = string.Empty;
+        product.Id = Guid.NewGuid().ToString("N");
         var created = await _products.CreateAsync(product, ct);
         return CreatedAtAction(nameof(Create), new { id = created.Id }, created);
     }
