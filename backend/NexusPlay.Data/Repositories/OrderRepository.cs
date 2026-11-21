@@ -31,9 +31,10 @@ public class OrderRepository : IOrderRepository
 
         // Exact phone match only. Suffix matching allows unrelated numbers to
         // reveal an order and must never be used for public order tracking.
+        var originallyEnteredPhone = phone.Trim();
         return await _orders.Find(o =>
                 o.OrderNo == normalizedOrderNo &&
-                o.Customer.Phone == normalizedPhone)
+                (o.Customer.Phone == normalizedPhone || o.Customer.Phone == originallyEnteredPhone))
             .FirstOrDefaultAsync(ct);
     }
 
