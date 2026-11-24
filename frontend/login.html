@@ -29,6 +29,23 @@
             <button type="submit" class="btn btn--dark btn--lg btn--block" id="auth-submit">Log In</button>
           </form>
 
+          <div class="auth-divider"><span>or</span></div>
+          <div id="google-signin-button" class="google-signin-button" aria-label="Sign in with Google"></div>
+          <div class="form-error" id="google-signin-error" hidden></div>
+
+          <form id="google-link-form" class="auth-form auth-form--link" hidden>
+            <p class="auth-form-note">
+              This email already has a NexusPlay account. Enter your password to connect Google Sign-In.
+            </p>
+            <label>Existing account password
+              <input id="google-link-password" name="password" type="password" required placeholder="••••••••" />
+            </label>
+            <div class="form-error" id="google-link-error" hidden></div>
+            <button type="submit" class="btn btn--dark btn--lg btn--block" id="google-link-submit">
+              Connect Google account
+            </button>
+          </form>
+
           <p class="auth-alt">New to NexusPlay? <a href="/register.html">Create an account</a></p>
         </div>
       </div>

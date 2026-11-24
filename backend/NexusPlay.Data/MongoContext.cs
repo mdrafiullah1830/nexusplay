@@ -39,6 +39,14 @@ public class MongoContext
                 new CreateIndexOptions { Unique = true, Name = "ux_email" }),
             cancellationToken: ct);
 
+        // Google subject IDs are unique per Google account. The sparse index lets
+        // password-only users (whose subject is null) share the collection.
+        await Users.Indexes.CreateOneAsync(
+            new CreateIndexModel<AppUser>(
+                Builders<AppUser>.IndexKeys.Ascending(u => u.GoogleSubject),
+                new CreateIndexOptions { Unique = true, Sparse = true, Name = "ux_google_subject" }),
+            cancellationToken: ct);
+
         // One saved product per user — the unique index is also what makes
         // POST /api/wishlist idempotent at the database level.
         await Wishlists.Indexes.CreateOneAsync(

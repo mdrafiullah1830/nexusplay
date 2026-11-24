@@ -9,6 +9,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public code?: string,
   ) {
     super(message);
   }
@@ -18,10 +19,11 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   auth?: boolean;
+  headers?: Record<string, string>;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options.headers };
 
   const token = localStorage.getItem("nexusplay_token");
   if (options.auth && token) headers.Authorization = `Bearer ${token}`;
@@ -32,6 +34,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     method: options.method ?? "GET",
     headers: isFormData ? headers : { ...headers, "Content-Type": "application/json" },
     body: isFormData ? (options.body as FormData) : (options.body !== undefined ? JSON.stringify(options.body) : undefined),
+    credentials: "include",
   });
 
   if (res.status === 204) return undefined as T;
@@ -43,7 +46,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       (data && typeof data === "object" && "message" in data
         ? String((data as { message: unknown }).message)
         : null) ?? `Request failed (${res.status})`;
-    throw new ApiError(res.status, message);
+    const code =
+      data && typeof data === "object" && "code" in data
+        ? String((data as { code: unknown }).code)
+        : undefined;
+    throw new ApiError(res.status, message, code);
   }
 
   return data as T;
@@ -51,8 +58,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export const api = {
   get: <T>(path: string, auth = false) => request<T>(path, { auth }),
-  post: <T>(path: string, body?: unknown, auth = false) =>
-    request<T>(path, { method: "POST", body, auth }),
+  post: <T>(path: string, body?: unknown, auth = false, headers?: Record<string, string>) =>
+    request<T>(path, { method: "POST", body, auth, headers }),
   put: <T>(path: string, body?: unknown, auth = true) =>
     request<T>(path, { method: "PUT", body, auth }),
   del: <T>(path: string, auth = true) => request<T>(path, { method: "DELETE", auth }),

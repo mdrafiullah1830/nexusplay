@@ -18,7 +18,7 @@ accessories at honest prices. Built with a Nike-inspired design system.
   progress (free delivery over BDT 5,000, otherwise BDT 120)
 - **Checkout** — Cash on Delivery **and** bKash (manual TrxID submission)
 - **Order tracking** — track by order number + phone, visual timeline
-- **Auth** — register / login with JWT (BCrypt-hashed passwords)
+- **Auth** — register / login with JWT (BCrypt-hashed passwords) and Google Sign-In
 - **Admin panel** — dashboard stats, product CRUD, order status management,
   one-click bKash payment verification
 - **Dark mode** — follows system preference (`prefers-color-scheme`)
@@ -96,6 +96,33 @@ cd frontend && npm run build     # output in frontend/dist
 
 Admin panel: `http://localhost:5173/admin.html`
 
+### Google Sign-In setup
+
+Google Sign-In is disabled until a Web application OAuth client ID is configured:
+
+1. Open [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create an **OAuth client ID** with application type **Web application**.
+3. Add `http://localhost:5173` to **Authorized JavaScript origins**.
+4. Add `http://localhost:5173/login.html` and `http://localhost:5173/register.html` to
+   **Authorized redirect URIs** (these are safe redirect URIs for the GIS button).
+5. Copy the client ID into `backend/NexusPlay.Api/appsettings.json`:
+
+   ```json
+   "Google": {
+     "ClientId": "1234567890-example.apps.googleusercontent.com"
+   }
+   ```
+
+For deployed environments, set it through an environment variable instead of
+committing it to `appsettings.json`:
+
+```bash
+export Google__ClientId="1234567890-example.apps.googleusercontent.com"
+```
+
+Then add the deployed frontend origin and redirect URIs in Google Cloud Console.
+A client secret is **not required** for this GIS ID-token flow.
+
 > Change `Admin:*` and `Jwt:Secret` in
 > `backend/NexusPlay.Api/appsettings.json` before deploying.
 
@@ -122,6 +149,8 @@ GET    /api/products?category=&brand=&stock=&min=&max=&q=&sort=&page=
 GET    /api/products/{id}
 POST   /api/auth/register          { name, email, phone?, password }
 POST   /api/auth/login             { email, password }
+GET    /api/auth/google/config
+POST   /api/auth/google            { credential, csrfToken, password? }
 GET    /api/auth/me                (Bearer)
 POST   /api/orders                 { customer, items, paymentMethod, bkashTrxId? }
 GET    /api/orders/track?orderNo=&phone=

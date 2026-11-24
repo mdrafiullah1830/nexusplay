@@ -1063,6 +1063,47 @@ textarea {
   }
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  margin: $space-lg 0;
+  color: $gray-500;
+  font-size: $fs-xs;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: $gray-200;
+  }
+}
+
+.google-signin-button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.auth-form--link {
+  margin-top: $space-lg;
+  padding-top: $space-lg;
+  border-top: 1px solid $gray-200;
+}
+
+.auth-form-note {
+  color: $gray-600;
+  font-size: $fs-sm;
+}
+
 // ============================================================
 // ADMIN
 // ============================================================

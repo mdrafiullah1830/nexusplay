@@ -16,6 +16,12 @@ interface AuthResponse {
   user: AuthUser;
 }
 
+export interface GoogleAuthConfig {
+  enabled: boolean;
+  clientId: string | null;
+  csrfToken?: string;
+}
+
 const TOKEN_KEY = "nexusplay_token";
 const USER_KEY = "nexusplay_user";
 
@@ -54,6 +60,25 @@ export const auth = {
 
   login: async (email: string, password: string): Promise<AuthUser> => {
     const res = await api.post<AuthResponse>("/auth/login", { email, password });
+    localStorage.setItem(TOKEN_KEY, res.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+    return res.user;
+  },
+
+  googleConfig: async (): Promise<GoogleAuthConfig> =>
+    api.get<GoogleAuthConfig>("/auth/google/config"),
+
+  googleLogin: async (
+    credential: string,
+    csrfToken: string,
+    password?: string,
+  ): Promise<AuthUser> => {
+    const res = await api.post<AuthResponse>(
+      "/auth/google",
+      { credential, csrfToken, password },
+      false,
+      { "X-CSRF-Token": csrfToken },
+    );
     localStorage.setItem(TOKEN_KEY, res.token);
     localStorage.setItem(USER_KEY, JSON.stringify(res.user));
     return res.user;

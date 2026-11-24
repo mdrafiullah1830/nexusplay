@@ -14,6 +14,10 @@ public class AppUser
     public string? Phone { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
 
+    /// <summary>Stable Google account identifier. Empty for password-only accounts.</summary>
+    [BsonIgnoreIfNull]
+    public string? GoogleSubject { get; set; }
+
     /// <summary>user | admin</summary>
     public string Role { get; set; } = "user";
 

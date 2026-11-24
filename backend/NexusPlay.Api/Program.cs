@@ -110,10 +110,12 @@ var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
 builder.Services.AddCors(o => o.AddPolicy("frontend", p => p
     .WithOrigins(origins)
     .AllowAnyHeader()
-    .AllowAnyMethod()));
+    .AllowAnyMethod()
+    .AllowCredentials()));
 
 // -- Services ---------------------------------------------------
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton<GoogleAuthService>();
 builder.Services.AddSingleton<OrderEventService>();
 
 builder.Services.AddHttpClient<IPaymentService, PaymentService>();

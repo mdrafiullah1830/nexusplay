@@ -38,7 +38,13 @@ public interface IWishlistRepository
 public interface IUserRepository
 {
     Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct = default);
+    Task<AppUser?> GetByGoogleSubjectAsync(string googleSubject, CancellationToken ct = default);
     Task<AppUser?> GetAsync(string id, CancellationToken ct = default);
     Task<AppUser> CreateAsync(AppUser user, CancellationToken ct = default);
+    Task<bool> LinkGoogleSubjectAsync(
+        string id,
+        string googleSubject,
+        string? name,
+        CancellationToken ct = default);
     Task<bool> AnyAsync(CancellationToken ct = default);
 }
