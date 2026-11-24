@@ -16,6 +16,9 @@ export const products: Product[] = [
     connectivity: "2.4G/wired on Windows; Bluetooth on Android",
     stock: "in-stock",
     rating: 4.6,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/8BitDo_Ultimate_2c/01_angle.png",
+    ],
   },
   {
     id: "gamesir-g7-pro-8k-phantom-blade",
@@ -29,6 +32,9 @@ export const products: Product[] = [
     stock: "pre-order",
     advance: 1000,
     rating: 4.9,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp",
+    ],
   },
   {
     id: "flydigi-apex-6-pro",
@@ -42,6 +48,9 @@ export const products: Product[] = [
     stock: "pre-order",
     advance: 1500,
     rating: 4.8,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_6_Pro/01_angle.webp",
+    ],
   },
   {
     id: "flydigi-apex-6-pro-shadow-blade",
@@ -55,6 +64,9 @@ export const products: Product[] = [
     stock: "pre-order",
     advance: 1500,
     rating: 4.9,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_6_Pro_Shadow_Blade_Zero_Limited_Edition/01_angle.webp",
+    ],
   },
   {
     id: "gamesir-cyclone-2",
@@ -68,6 +80,9 @@ export const products: Product[] = [
     connectivity: "Bluetooth, 2.4G, USB wired",
     stock: "pre-order",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Cyclone_2/01_angle.png",
+    ],
   },
   {
     id: "gamesir-g7-pro",
@@ -81,6 +96,9 @@ export const products: Product[] = [
     connectivity: "Xbox wired; PC 2.4G/wired; Android Bluetooth",
     stock: "pre-order",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro/01_angle.png",
+    ],
   },
   {
     id: "gamesir-g7-pro-wuchang",
@@ -93,6 +111,9 @@ export const products: Product[] = [
     connectivity: "2.4G/wired for Xbox & PC; Bluetooth for Android",
     stock: "pre-order",
     rating: 4.8,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro_Wuchang_Limited_edition/01_angle.png",
+    ],
   },
   {
     id: "gamesir-g7-pro-8k-black",
@@ -105,6 +126,9 @@ export const products: Product[] = [
     connectivity: "2.4G + USB-C wired",
     stock: "pre-order",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_Pro_8k_PC_Black_Edition/01_angle.png",
+    ],
   },
   {
     id: "gamesir-g7-pro-8k-aimlabs",
@@ -117,6 +141,9 @@ export const products: Product[] = [
     connectivity: "2.4G + USB-C wired",
     stock: "pre-order",
     rating: 4.8,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro_8k_pc_Aimlabs_edition/01_angle.png",
+    ],
   },
   {
     id: "gamesir-tarantula-8k",
@@ -129,6 +156,9 @@ export const products: Product[] = [
     connectivity: "USB wired only",
     stock: "pre-order",
     rating: 4.5,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Tarantula_8k_pc/01_angle.png",
+    ],
   },
   {
     id: "flydigi-vader-5-pro",
@@ -141,6 +171,9 @@ export const products: Product[] = [
     connectivity: "2.4G, Bluetooth, USB wired",
     stock: "pre-order",
     rating: 4.8,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Vader_5_pro/01_angle.png",
+    ],
   },
   {
     id: "flydigi-apex-5",
@@ -153,6 +186,9 @@ export const products: Product[] = [
     connectivity: "2.4G, Bluetooth, USB wired",
     stock: "pre-order",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_5/01_angle.png",
+    ],
   },
   {
     id: "dock-2-pro",
@@ -166,6 +202,9 @@ export const products: Product[] = [
     charging: "Wireless fast charging; 150 FPS full-color display; RGB pixel base",
     stock: "pre-order",
     rating: 4.6,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Dock_2_Pro/01_angle.png",
+    ],
   },
   {
     id: "flydigi-bs2-pro",
@@ -178,6 +217,9 @@ export const products: Product[] = [
     cooling: "27-blade high-pressure fan; up to 4000 RPM; Smart Fan 2.0",
     stock: "pre-order",
     rating: 4.5,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_BS2_Pro/01_angle.png",
+    ],
   },
   {
     id: "flydigi-bs3-pro",
@@ -190,6 +232,9 @@ export const products: Product[] = [
     cooling: "27-blade turbine fan; up to 4000 RPM; triple-sided intake; Smart 3.0",
     stock: "pre-order",
     rating: 4.6,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_BS3_Pro/01_angle.png",
+    ],
   },
   {
     id: "8bitdo-ultimate-2",
@@ -203,6 +248,9 @@ export const products: Product[] = [
     connectivity: "2.4G/wired on Windows; Bluetooth on Android/Apple",
     stock: "out-of-stock",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/8BitDo_Ultimate_2/01_angle.png",
+    ],
   },
   {
     id: "gamesir-nova-2-lite",
@@ -216,6 +264,9 @@ export const products: Product[] = [
     connectivity: "Bluetooth, 2.4G, USB wired",
     stock: "out-of-stock",
     rating: 4.4,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Nova_2_lite/01_angle.png",
+    ],
   },
   {
     id: "flydigi-vader-5-pro-with-dock",
@@ -229,6 +280,9 @@ export const products: Product[] = [
     dock: "Wireless charging; 150 FPS color display; RGB pixel base; 3x USB + 1x USB-C",
     stock: "out-of-stock",
     rating: 4.8,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Vader_5_pro_with_Dock/01_angle.png",
+    ],
   },
   {
     id: "flydigi-apex-5-with-dock",
@@ -242,6 +296,9 @@ export const products: Product[] = [
     dock: "Wireless charging; 150 FPS color display; RGB pixel base; 3x USB + 1x USB-C",
     stock: "out-of-stock",
     rating: 4.7,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_5_With_Dock/01_angle.png",
+    ],
   },
   {
     id: "flydigi-direwolf-4",
@@ -254,6 +311,9 @@ export const products: Product[] = [
     connectivity: "2.4G, Bluetooth, USB wired",
     stock: "out-of-stock",
     rating: 4.5,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Direwolf_4/01_angle.png",
+    ],
   },
   {
     id: "easysmx-xo5-pro",
@@ -267,6 +327,9 @@ export const products: Product[] = [
     connectivity: "2.4G, Bluetooth, USB wired",
     stock: "out-of-stock",
     rating: 4.3,
+    imageUrls: [
+      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/EasySMX_XO5_Pro/01_angle.png",
+    ],
   },
   {
     id: "easysmx-d10",

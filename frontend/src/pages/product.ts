@@ -2,7 +2,6 @@
 // NEXUSPLAY — Product detail page
 // ============================================================
 import { api } from "../services/api";
-import { products as localProducts } from "../data/products";
 import { productCard } from "../components/productCard";
 import { cart, formatBDT } from "../services/cart";
 import { toast } from "../services/toast";
@@ -185,7 +184,9 @@ function renderWishlist(): void {
     return;
   }
 
-  const products = localProducts.filter((p) => wishlist.items.includes(p.id));
+  // Fetch products from API
+  api.get<PagedResult<Product>>("/products?pageSize=100&sort=featured").then((res) => {
+    const products = res.items.filter((p) => wishlist.items.includes(p.id));
   const total = products.reduce((sum, p) => sum + p.price, 0);
 
   wishlistList.innerHTML = products
