@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#100c2c"/><stop offset=".48" stop-color="#5f245c"/><stop offset=".72" stop-color="#c94d68"/><stop offset="1" stop-color="#19132d"/></linearGradient>
+    <linearGradient id="sun" x2="0" y2="1"><stop stop-color="#fff3ac"/><stop offset=".48" stop-color="#ff9c79"/><stop offset="1" stop-color="#ff466e"/></linearGradient>
+    <linearGradient id="street" x2="0" y2="1"><stop stop-color="#28233f"/><stop offset="1" stop-color="#050610"/></linearGradient>
+    <linearGradient id="building" x2="0" y2="1"><stop stop-color="#44304f"/><stop offset="1" stop-color="#0c1024"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="24"/></filter>
+    <pattern id="windows" width="27" height="34" patternUnits="userSpaceOnUse"><path d="M7 8h7v13H7z" fill="#f6a7ba" opacity=".47"/><path d="M20 11h3v10h-3z" fill="#77d5e8" opacity=".38"/></pattern>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1600v900H0z"/>
+  <circle cx="1100" cy="342" r="190" fill="#ff9b7a" opacity=".5" filter="url(#glow)"/>
+  <circle cx="1100" cy="342" r="160" fill="url(#sun)"/>
+  <path d="M0 530 140 460 280 488 390 423 500 476 620 454 700 513 820 460 960 506 1100 473 1240 500 1400 450 1600 510v390H0z" fill="#381d40" opacity=".75"/>
+  <path d="M0 620V420h75v-52h71v28h58v224zm250 0V344h114v276zm400 0V395h72v-69h72v294zm700 0V351h112v55h73v214z" fill="url(#building)"/>
+  <path d="M0 620V420h75v-52h71v28h58v224zm250 0V344h114v276zm400 0V395h72v-69h72v294zm700 0V351h112v55h73v214z" fill="url(#windows)" opacity=".68"/>
+  <path d="M155 640V476h45v-50h32v214zm290 0V382h65v-66h25v324zm510 0V403h66v-97h36v334zm316 0V436h62v204z" fill="#19172f"/>
+  <path d="M0 610h1600v290H0z" fill="#0d1022"/>
+  <path d="M615 610h400l585 290H0z" fill="url(#street)"/>
+  <path d="M797 610h18l25 290h-68z" fill="#ffbd79" opacity=".57"/>
+  <path d="m675 632-11 8-250 260h-18zm302 0 11 8 250 260h-18z" fill="#ff597a" opacity=".68"/>
+  <path d="M0 618h1600M0 657h1600" stroke="#fc6780" stroke-opacity=".3" stroke-width="3"/>
+  <g fill="#48d7e5" opacity=".76"><path d="M75 550h100v5H75zm234-57h43v5h-43zm397-30h62v5h-62zm710 24h96v5h-96z"/></g>
+  <path d="M0 0h1600v900H0z" fill="#08091b" opacity=".13"/>
+</svg>

@@ -2,6 +2,7 @@
 // NEXUSPLAY — Product detail page
 // ============================================================
 import { api } from "../services/api";
+import { products as localProducts } from "../data/products";
 import { productCard } from "../components/productCard";
 import { cart, formatBDT } from "../services/cart";
 import { toast } from "../services/toast";
@@ -214,6 +215,9 @@ function renderWishlist(): void {
       ${freeShipNote}
       <a class="btn btn--dark" href="/shop.html">Continue Shopping</a>`;
   }
+  }).catch(() => {
+    wishlistList.innerHTML = '<p class="empty-wishlist">Unable to load your wishlist right now.</p>';
+  });
 }
 
 document.addEventListener("wishlist:change", renderWishlist);

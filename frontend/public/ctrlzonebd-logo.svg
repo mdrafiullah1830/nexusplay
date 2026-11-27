@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" role="img" aria-labelledby="title">
+  <title id="title">CtrlZoneBD</title>
+  <g fill="#fff" font-family="Arial Black, Arial, sans-serif" font-weight="900" letter-spacing="-18">
+    <text x="27" y="205" font-size="250">C+RL</text>
+    <text x="28" y="421" font-size="250">Z</text>
+    <text x="590" y="421" font-size="250">NE</text>
+  </g>
+  <circle cx="386" cy="293" r="35" fill="#ff4c28"/>
+  <circle cx="458" cy="233" r="35" fill="#ffca05"/>
+  <circle cx="530" cy="293" r="35" fill="#08d8a4"/>
+  <circle cx="458" cy="357" r="35" fill="#0c9def"/>
+</svg>

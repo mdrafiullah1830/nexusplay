@@ -1,5 +1,5 @@
 // ============================================================
-// NEXUSPLAY — Login / Register pages
+// CTRLZONEBD — Login / Register pages
 // ============================================================
 import { auth } from "../services/auth";
 import { ApiError } from "../services/api";
@@ -112,7 +112,7 @@ export function initAuthPages(): void {
 
     try {
       await auth.googleLogin(pendingGoogleCredential, pendingCsrfToken, password);
-      toast("Welcome to NexusPlay!");
+      toast("Welcome to CtrlZoneBD!");
       refreshAccountArea();
       window.location.href = redirectTarget();
     } catch (err) {

@@ -10,7 +10,7 @@ export function initFooter(): void {
     <footer class="footer">
       <div class="footer__grid">
         <div>
-          <div class="footer__brand">NexusPlay</div>
+          <div class="footer__brand"><img src="/ctrlzonebd-logo.svg" alt="CtrlZoneBD" /></div>
           <p class="footer__tagline">
             Gaming controllers and accessories, delivered across Bangladesh. Honest prices, real after-sales
             support.
@@ -46,7 +46,7 @@ export function initFooter(): void {
       </div>
 
       <div class="footer__bottom">
-        <span>© 2026 NexusPlay. All rights reserved.</span>
+        <span>© 2026 CtrlZoneBD. All rights reserved.</span>
         <div class="footer__social">
           <a href="https://www.facebook.com/" target="_blank" rel="noopener">Facebook</a>
           <a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a>

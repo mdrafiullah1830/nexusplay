@@ -1,4 +1,6 @@
 using System.IO;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NexusPlay.Api.Dtos;
@@ -17,6 +19,8 @@ public class AdminController : ControllerBase
     private readonly IOrderRepository _orders;
     private readonly IWebHostEnvironment _env;
     private readonly OrderEventService _events;
+    private readonly IConfiguration _config;
+    private readonly IHttpClientFactory _httpClients;
 
     private static readonly HashSet<string> ValidStatuses = new()
     {
@@ -24,12 +28,15 @@ public class AdminController : ControllerBase
     };
 
     public AdminController(IProductRepository products, IOrderRepository orders,
-        IWebHostEnvironment env, OrderEventService events)
+        IWebHostEnvironment env, OrderEventService events, IConfiguration config,
+        IHttpClientFactory httpClients)
     {
         _products = products;
         _orders = orders;
         _env = env;
         _events = events;
+        _config = config;
+        _httpClients = httpClients;
     }
 
     // -- Dashboard ------------------------------------------------
@@ -98,8 +105,9 @@ public class AdminController : ControllerBase
         var product = await _products.GetAsync(id, ct);
         if (product is null) return NotFound(new { message = "Product not found" });
 
-        var uploadsDir = Path.Combine(_env.ContentRootPath, "uploads", "products");
-        Directory.CreateDirectory(uploadsDir);
+        var gateway = _config["D1:GatewayUrl"];
+        var uploadsDir = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads", "products");
+        if (string.IsNullOrWhiteSpace(gateway)) Directory.CreateDirectory(uploadsDir);
 
         foreach (var file in files)
         {
@@ -107,18 +115,36 @@ public class AdminController : ControllerBase
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
                 return BadRequest(new { message = $"Unsupported file type: {ext}" });
+            if (file.Length > 5_000_000)
+                return BadRequest(new { message = "Images must be under 5 MB" });
 
             var fileName = $"{Guid.NewGuid():N}{ext}";
-            var filePath = Path.Combine(uploadsDir, fileName);
-            await using var fs = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(fs, ct);
-
-            product.ImageUrls.Add($"/uploads/products/{fileName}");
+            if (!string.IsNullOrWhiteSpace(gateway))
+            {
+                using var client = _httpClients.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["D1:Token"]);
+                await using var stream = file.OpenReadStream();
+                using var content = new StreamContent(stream);
+                content.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                using var response = await client.PutAsync($"{gateway.TrimEnd('/')}/images/{fileName}", content, ct);
+                response.EnsureSuccessStatusCode();
+                var uploaded = await response.Content.ReadFromJsonAsync<UploadedImage>(cancellationToken: ct);
+                product.ImageUrls.Add(uploaded?.Url ?? throw new InvalidOperationException("Missing R2 image URL"));
+            }
+            else
+            {
+                var filePath = Path.Combine(uploadsDir, fileName);
+                await using var fs = new FileStream(filePath, FileMode.Create);
+                await file.CopyToAsync(fs, ct);
+                product.ImageUrls.Add($"/uploads/products/{fileName}");
+            }
         }
 
         var ok = await _products.ReplaceAsync(product, ct);
         return ok ? Ok(product) : NotFound(new { message = "Product not found" });
     }
+
+    private sealed record UploadedImage(string Url);
 
     // -- Orders ---------------------------------------------------
 

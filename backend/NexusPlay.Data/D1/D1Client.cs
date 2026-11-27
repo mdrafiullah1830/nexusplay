@@ -1,0 +1,49 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+namespace NexusPlay.Data.D1;
+
+public sealed class D1Client
+{
+    private readonly HttpClient _http;
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    public D1Client(HttpClient http, string gatewayUrl, string token)
+    {
+        _http = http;
+        _http.BaseAddress = new Uri(gatewayUrl.TrimEnd('/') + "/");
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    public async Task<List<JsonElement>> QueryAsync(string sql, object?[]? parameters = null,
+        CancellationToken ct = default)
+    {
+        using var response = await _http.PostAsJsonAsync("query", new { sql, @params = parameters ?? [] }, Json, ct);
+        response.EnsureSuccessStatusCode();
+        using var data = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: ct)
+            ?? throw new InvalidOperationException("Empty D1 response");
+        var root = data.RootElement;
+        if (!root.GetProperty("success").GetBoolean())
+            throw new InvalidOperationException("D1 query failed");
+        return root.GetProperty("results").EnumerateArray().Select(x => x.Clone()).ToList();
+    }
+
+    public async Task InitializeAsync(CancellationToken ct = default)
+    {
+        string[] schema =
+        [
+            "CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, json TEXT NOT NULL, name TEXT NOT NULL, brand TEXT NOT NULL, category TEXT NOT NULL, stock TEXT NOT NULL, price REAL NOT NULL, old_price REAL NOT NULL, rating REAL NOT NULL, created_at TEXT NOT NULL)",
+            "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
+            "CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, json TEXT NOT NULL, order_no TEXT NOT NULL UNIQUE, phone TEXT NOT NULL, customer_name TEXT NOT NULL, status TEXT NOT NULL, total REAL NOT NULL, created_at TEXT NOT NULL)",
+            "CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at)",
+            "CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, json TEXT NOT NULL, email TEXT NOT NULL UNIQUE, google_subject TEXT UNIQUE)",
+            "CREATE TABLE IF NOT EXISTS wishlists (id TEXT PRIMARY KEY, json TEXT NOT NULL, user_id TEXT NOT NULL, product_id TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(user_id, product_id))",
+        ];
+        foreach (var statement in schema) await QueryAsync(statement, ct: ct);
+    }
+
+    public static string Encode<T>(T value) => JsonSerializer.Serialize(value, Json);
+    public static T Decode<T>(JsonElement row) => JsonSerializer.Deserialize<T>(row.GetProperty("json").GetString()!, Json)!;
+    public static long Long(JsonElement row, string name) => row.GetProperty(name).GetInt64();
+}

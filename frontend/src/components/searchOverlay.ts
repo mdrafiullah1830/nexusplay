@@ -1,5 +1,5 @@
 // ============================================================
-// NEXUSPLAY — Header search overlay
+// CTRLZONEBD — Header search overlay
 // Instant client-side search over the static catalogue.
 // ============================================================
 import { products } from "../data/products";

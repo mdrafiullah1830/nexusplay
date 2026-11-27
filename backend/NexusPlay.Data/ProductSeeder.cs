@@ -1,4 +1,4 @@
-using MongoDB.Driver;
+using NexusPlay.Core.Interfaces;
 using NexusPlay.Core.Models;
 
 namespace NexusPlay.Data;
@@ -6,9 +6,9 @@ namespace NexusPlay.Data;
 /// <summary>Seeds the catalogue on first run (source: GamersGRIP product list).</summary>
 public static class ProductSeeder
 {
-    public static async Task SeedIfEmptyAsync(MongoContext ctx, CancellationToken ct = default)
+    public static async Task SeedIfEmptyAsync(IProductRepository products, CancellationToken ct = default)
     {
-        if (await ctx.Products.Find(Builders<Product>.Filter.Empty).AnyAsync(ct)) return;
+        if (await products.AnyAsync(ct)) return;
 
         var now = DateTime.UtcNow;
         var seed = new List<Product>
@@ -143,6 +143,6 @@ public static class ProductSeeder
                 Stock = "out-of-stock", Rating = 4.4, CreatedAt = now.AddDays(-23) },
         };
 
-        await ctx.Products.InsertManyAsync(seed, cancellationToken: ct);
+        foreach (var product in seed) await products.CreateAsync(product, ct);
     }
 }

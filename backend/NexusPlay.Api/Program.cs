@@ -19,8 +19,18 @@ using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
 using NexusPlay.Data;
 using NexusPlay.Data.Repositories;
+using NexusPlay.Data.D1;
 
 var builder = WebApplication.CreateBuilder(args);
+if (!builder.Environment.IsDevelopment())
+{
+    var jwtSecret = builder.Configuration["Jwt:Secret"];
+    var adminPassword = builder.Configuration["Admin:Password"];
+    if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret == "nexusplay-dev-secret-key-change-in-production-0123456789")
+        throw new InvalidOperationException("Set a unique Jwt:Secret for production");
+    if (string.IsNullOrWhiteSpace(adminPassword) || adminPassword == "Admin@123")
+        throw new InvalidOperationException("Set a unique Admin:Password for production");
+}
 
 // -- Rate Limiting ---------------------------------------------------------
 builder.Services.AddRateLimiter(options =>
@@ -95,14 +105,29 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// -- MongoDB -----------------------------------------------------
-var mongoConn = builder.Configuration["Mongo:ConnectionString"] ?? "mongodb://localhost:27017";
-var mongoDb = builder.Configuration["Mongo:Database"] ?? "nexusplay";
-builder.Services.AddSingleton(new MongoContext(mongoConn, mongoDb));
-builder.Services.AddSingleton<IProductRepository, ProductRepository>();
-builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
-builder.Services.AddSingleton<IUserRepository, UserRepository>();
-builder.Services.AddSingleton<IWishlistRepository, WishlistRepository>();
+// -- Database -----------------------------------------------------
+var d1Url = builder.Configuration["D1:GatewayUrl"];
+if (!string.IsNullOrWhiteSpace(d1Url))
+{
+    var d1Token = builder.Configuration["D1:Token"];
+    if (string.IsNullOrWhiteSpace(d1Token))
+        throw new InvalidOperationException("D1:Token is required when D1:GatewayUrl is set");
+    builder.Services.AddSingleton(sp => new D1Client(new HttpClient(), d1Url, d1Token));
+    builder.Services.AddSingleton<IProductRepository, D1ProductRepository>();
+    builder.Services.AddSingleton<IOrderRepository, D1OrderRepository>();
+    builder.Services.AddSingleton<IUserRepository, D1UserRepository>();
+    builder.Services.AddSingleton<IWishlistRepository, D1WishlistRepository>();
+}
+else
+{
+    var mongoConn = builder.Configuration["Mongo:ConnectionString"] ?? "mongodb://localhost:27017";
+    var mongoDb = builder.Configuration["Mongo:Database"] ?? "nexusplay";
+    builder.Services.AddSingleton(new MongoContext(mongoConn, mongoDb));
+    builder.Services.AddSingleton<IProductRepository, ProductRepository>();
+    builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
+    builder.Services.AddSingleton<IUserRepository, UserRepository>();
+    builder.Services.AddSingleton<IWishlistRepository, WishlistRepository>();
+}
 
 // -- CORS -------------------------------------------------------
 var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
@@ -206,9 +231,11 @@ if (File.Exists(spaIndex))
 app.MapControllers();
 
 // -- Database bootstrap + seed ----------------------------------
-var ctx = app.Services.GetRequiredService<MongoContext>();
-await ctx.EnsureIndexesAsync();
-await ProductSeeder.SeedIfEmptyAsync(ctx);
+if (!string.IsNullOrWhiteSpace(d1Url))
+    await app.Services.GetRequiredService<D1Client>().InitializeAsync();
+else
+    await app.Services.GetRequiredService<MongoContext>().EnsureIndexesAsync();
+await ProductSeeder.SeedIfEmptyAsync(app.Services.GetRequiredService<IProductRepository>());
 await SeedAdminAsync(app.Services);
 
 app.Run();
@@ -218,9 +245,8 @@ static async Task SeedAdminAsync(IServiceProvider services)
 {
     var users = services.GetRequiredService<IUserRepository>();
     var config = services.GetRequiredService<IConfiguration>();
-    if (await users.AnyAsync()) return;
-
     var email = config["Admin:Email"] ?? "admin@nexusplay.com";
+    if (await users.GetByEmailAsync(email) is not null) return;
     var password = config["Admin:Password"] ?? "Admin@123";
 
     await users.CreateAsync(new NexusPlay.Core.Models.AppUser

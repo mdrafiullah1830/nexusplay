@@ -106,7 +106,7 @@ function mobileMenuMarkup(): string {
     <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true"
          aria-label="${t("nav.menu")}" aria-hidden="true">
       <div class="mobile-menu__head">
-        <span class="navbar__logo">Nexus<span>Play</span></span>
+        <span class="navbar__logo"><img src="/ctrlzonebd-icon.svg" alt="" />CTRL<span>ZONEBD</span></span>
         <button class="mobile-menu__close" id="menu-close" type="button" aria-label="${t("nav.close")}">✕</button>
       </div>
 
@@ -168,7 +168,7 @@ function renderHeader(root: HTMLElement): void {
         <button class="navbar__icon-btn navbar__burger" id="burger" type="button"
                 aria-label="${t("nav.menu")}" aria-expanded="false" aria-controls="mobile-menu">☰</button>
 
-        <a href="/" class="navbar__logo">Nexus<span>Play</span></a>
+        <a href="/" class="navbar__logo" aria-label="CtrlZoneBD home"><img src="/ctrlzonebd-icon.svg" alt="" />CTRL<span>ZONEBD</span></a>
 
         <nav class="navbar__links" aria-label="Main">
           <a class="navbar__link" href="/">${t("nav.home")}</a>
