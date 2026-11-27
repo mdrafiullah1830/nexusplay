@@ -88,6 +88,19 @@ Open **http://localhost:5173** — `/api` requests are proxied to the backend.
 cd frontend && npm run build     # output in frontend/dist
 ```
 
+### Production updates
+
+Push to `main` to trigger the Cloudflare `ctrlzonebd` frontend build and the
+Render `ctrlzonebd-api` backend deploy. The Cloudflare `ctrlzonebd-data` Worker
+is also connected to `main`; its build root is `cloudflare/d1-gateway` and it
+deploys with `npx wrangler deploy`.
+
+The backend applies numbered D1 schema migrations on startup. Add new,
+retry-safe SQL statements to `D1Client.InitializeAsync` with a new version
+number when changing the database schema. Existing product records are not
+overwritten by deploys: `ProductSeeder` only runs when the catalogue is empty.
+Update products through the admin API instead.
+
 ## 🔐 Credentials
 
 | Role  | Email               | Password   |

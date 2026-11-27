@@ -31,7 +31,16 @@ public sealed class D1Client
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        string[] schema =
+        await QueryAsync(
+            "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)",
+            ct: ct);
+        var applied = (await QueryAsync("SELECT version FROM schema_migrations", ct: ct))
+            .Select(row => row.GetProperty("version").GetInt32())
+            .ToHashSet();
+
+        // Each migration runs once on API startup. Keep statements in a migration
+        // safe to retry if the process stops before its version is recorded.
+        string[] initialSchema =
         [
             "CREATE TABLE IF NOT EXISTS products (id TEXT PRIMARY KEY, json TEXT NOT NULL, name TEXT NOT NULL, brand TEXT NOT NULL, category TEXT NOT NULL, stock TEXT NOT NULL, price REAL NOT NULL, old_price REAL NOT NULL, rating REAL NOT NULL, created_at TEXT NOT NULL)",
             "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
@@ -40,7 +49,19 @@ public sealed class D1Client
             "CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, json TEXT NOT NULL, email TEXT NOT NULL UNIQUE, google_subject TEXT UNIQUE)",
             "CREATE TABLE IF NOT EXISTS wishlists (id TEXT PRIMARY KEY, json TEXT NOT NULL, user_id TEXT NOT NULL, product_id TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(user_id, product_id))",
         ];
-        foreach (var statement in schema) await QueryAsync(statement, ct: ct);
+        var migrations = new (int Version, string[] Statements)[]
+        {
+            (1, initialSchema),
+        };
+
+        foreach (var (version, statements) in migrations)
+        {
+            if (applied.Contains(version)) continue;
+            foreach (var statement in statements) await QueryAsync(statement, ct: ct);
+            await QueryAsync(
+                "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+                [version, DateTime.UtcNow.ToString("O")], ct);
+        }
     }
 
     public static string Encode<T>(T value) => JsonSerializer.Serialize(value, Json);
