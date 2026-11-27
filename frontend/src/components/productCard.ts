@@ -20,7 +20,7 @@ const BRAND_TINT: Record<string, string> = {
 };
 
 const REPOSITORY_ART_ROOT =
-  "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images";
+  "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images";
 
 const LOCAL_PRODUCT_ART: Record<string, string> = {
   "8bitdo-ultimate-2c": REPOSITORY_ART_ROOT + "/8BitDo_Ultimate_2c/01_angle.png",

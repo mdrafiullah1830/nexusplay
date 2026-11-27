@@ -14,59 +14,43 @@ public interface ISmsService
     Task SendAsync(string to, string message, CancellationToken ct = default);
 }
 
-public class SmsService : ISmsService
+public class SmsService(IConfiguration config, HttpClient http) : ISmsService
 {
-    private readonly IConfiguration _config;
-    private readonly HttpClient _http;
-
-    public SmsService(IConfiguration config, HttpClient http)
-    {
-        _config = config;
-        _http = http;
-    }
-
     public async Task SendAsync(string to, string message, CancellationToken ct = default)
     {
-        // Check if SMS is configured
-        var senderId = _config["Sms:SenderId"] ?? "NEXUSPLAY";
+        var senderId = config["Sms:SenderId"];
+        if (string.IsNullOrWhiteSpace(senderId)) return;
 
-        if (string.IsNullOrEmpty(senderId))
+        var provider = config["Sms:Provider"]?.ToLowerInvariant();
+        var endpoint = config["Sms:Endpoint"];
+        if (provider == "twilio")
         {
-            // SMS not configured - silently skip
+            var accountSid = config["Sms:AccountSid"];
+            var apiKey = config["Sms:ApiKey"];
+            if (string.IsNullOrWhiteSpace(accountSid) || string.IsNullOrWhiteSpace(apiKey)) return;
+            endpoint ??= $"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json";
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{accountSid}:{apiKey}"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["From"] = senderId, ["To"] = to, ["Body"] = message,
+            });
+            using var response = await http.SendAsync(request, ct);
+            response.EnsureSuccessStatusCode();
             return;
         }
 
-        var url = _config["Sms:Endpoint"] ??
-                  $"https://api.twilio.com/2010-04-01/Accounts/{_config["Sms:AccountSid"]}/Messages.json";
-
-        if (false)
+        // Generic providers are opt-in and require a configured endpoint.
+        if (string.IsNullOrWhiteSpace(endpoint)) return;
+        using var genericRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
-            var accountSid = _config["Sms:AccountSid"] ?? string.Empty;
-            var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{accountSid}:{_config["Sms:ApiKey"]}"));
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", auth);
-
-            var formPayload = new Dictionary<string, string>
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                ["From"] = senderId,
-                ["To"] = to,
-                ["Body"] = message,
-            };
-            var payload = new FormUrlEncodedContent(formPayload);
-
-            await _http.PostAsync(url, payload, ct);
-        }
-        else
-        {
-            var formPayload = new Dictionary<string, string>
-            {
-                ["from"] = senderId,
-                ["to"] = to,
-                ["message"] = message,
-            };
-            var payload = new FormUrlEncodedContent(formPayload);
-
-            await _http.PostAsync(url, payload, ct);
-        }
-
-}
+                ["from"] = senderId, ["to"] = to, ["message"] = message,
+            }),
+        };
+        using var genericResponse = await http.SendAsync(genericRequest, ct);
+        genericResponse.EnsureSuccessStatusCode();
+    }
 }

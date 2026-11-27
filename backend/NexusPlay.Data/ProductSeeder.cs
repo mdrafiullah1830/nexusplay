@@ -143,6 +143,44 @@ public static class ProductSeeder
                 Stock = "out-of-stock", Rating = 4.4, CreatedAt = now.AddDays(-23) },
         };
 
-        foreach (var product in seed) await products.CreateAsync(product, ct);
+        // Keep API product links in step with the storefront's catalogue. The
+        // gateway imports the public source assets into R2 on first request.
+        const string imageRoot = "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/";
+        (string Id, string? ImagePath)[] identity =
+        [
+            ("8bitdo-ultimate-2c", "8BitDo_Ultimate_2c/01_angle.png"),
+            ("gamesir-g7-pro-8k-phantom-blade", "GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp"),
+            ("flydigi-apex-6-pro", "Flydigi_Apex_6_Pro/01_angle.webp"),
+            ("flydigi-apex-6-pro-shadow-blade", "Flydigi_Apex_6_Pro_Shadow_Blade_Zero_Limited_Edition/01_angle.webp"),
+            ("gamesir-cyclone-2", "GameSir_Cyclone_2/01_angle.png"),
+            ("gamesir-g7-pro", "GameSir_G7_pro/01_angle.png"),
+            ("gamesir-g7-pro-wuchang", "GameSir_G7_pro_Wuchang_Limited_edition/01_angle.png"),
+            ("gamesir-g7-pro-8k-black", "GameSir_G7_Pro_8k_PC_Black_Edition/01_angle.png"),
+            ("gamesir-g7-pro-8k-aimlabs", "GameSir_G7_pro_8k_pc_Aimlabs_edition/01_angle.png"),
+            ("gamesir-tarantula-8k", "GameSir_Tarantula_8k_pc/01_angle.png"),
+            ("flydigi-vader-5-pro", "Flydigi_Vader_5_pro/01_angle.png"),
+            ("flydigi-apex-5", "Flydigi_Apex_5/01_angle.png"),
+            ("dock-2-pro", "Flydigi_Dock_2_Pro/01_angle.png"),
+            ("flydigi-bs2-pro", "Flydigi_BS2_Pro/01_angle.png"),
+            ("flydigi-bs3-pro", "Flydigi_BS3_Pro/01_angle.png"),
+            ("8bitdo-ultimate-2", "8BitDo_Ultimate_2/01_angle.png"),
+            ("gamesir-nova-2-lite", "GameSir_Nova_2_lite/01_angle.png"),
+            ("flydigi-vader-5-pro-with-dock", "Flydigi_Vader_5_pro_with_Dock/01_angle.png"),
+            ("flydigi-apex-5-with-dock", "Flydigi_Apex_5_With_Dock/01_angle.png"),
+            ("flydigi-direwolf-4", "Flydigi_Direwolf_4/01_angle.png"),
+            ("easysmx-xo5-pro", "EasySMX_XO5_Pro/01_angle.png"),
+            ("easysmx-d10", null),
+        ];
+
+        if (seed.Count != identity.Length)
+            throw new InvalidOperationException("Product catalogue identity count mismatch");
+
+        for (var i = 0; i < seed.Count; i++)
+        {
+            seed[i].Id = identity[i].Id;
+            if (identity[i].ImagePath is { } imagePath)
+                seed[i].ImageUrls = [imageRoot + imagePath];
+            await products.CreateAsync(seed[i], ct);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace NexusPlay.Api.Services;
 
@@ -18,7 +19,7 @@ public class OrderEventService
     /// <summary>Subscribe to events for an order. Returns an async enumerable of SSE payloads.</summary>
     public async IAsyncEnumerable<string> SubscribeAsync(
         string orderNo,
-        CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken ct = default)
     {
         var queue = _events.GetOrAdd(orderNo, _ => new ConcurrentQueue<string>());
         _subscribers.AddOrUpdate(orderNo, 1, (_, c) => c + 1);

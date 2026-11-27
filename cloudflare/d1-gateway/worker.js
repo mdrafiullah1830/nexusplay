@@ -4,7 +4,22 @@ export default {
     if (request.method === 'GET' && url.pathname.startsWith('/images/')) {
       const key = url.pathname.slice('/images/'.length);
       if (!key || key.includes('..')) return new Response('Not found', { status: 404 });
-      const object = await env.IMAGES.get(key);
+      let object = await env.IMAGES.get(key);
+      if (!object && /^product_images\/[A-Za-z0-9_./-]+\.(?:png|jpe?g|webp)$/.test(key)) {
+        // Existing catalogue images are public in this repository. Import
+        // each one to R2 on first view, then serve later requests from R2.
+        const source = await fetch(
+          `https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/${key}`,
+        );
+        if (source.ok && (source.headers.get('Content-Type') || '').startsWith('image/')) {
+          const bytes = await source.arrayBuffer();
+          if (bytes.byteLength <= 5_000_000) {
+            const contentType = source.headers.get('Content-Type');
+            await env.IMAGES.put(key, bytes, { httpMetadata: { contentType } });
+            object = await env.IMAGES.get(key);
+          }
+        }
+      }
       if (!object) return new Response('Not found', { status: 404 });
       const headers = new Headers();
       object.writeHttpMetadata(headers);

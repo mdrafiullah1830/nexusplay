@@ -7,7 +7,7 @@ import { productCard } from "../components/productCard";
 import { api } from "../services/api";
 import type { Product, PagedResult } from "../types";
 
-const REPO_IMAGE_ROOT = "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images";
+const REPO_IMAGE_ROOT = "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images";
 
 function renderInto(selector: string, html: string): void {
   const el = document.querySelector<HTMLElement>(selector);

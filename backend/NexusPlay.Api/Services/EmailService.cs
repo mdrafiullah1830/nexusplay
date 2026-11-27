@@ -32,19 +32,20 @@ public class EmailService : IEmailService
     public async Task SendAsync(string to, string subject, string body, CancellationToken ct = default)
     {
         // Skip if not configured - log and continue (fail silently in dev)
-        if (string.IsNullOrEmpty(_smtpHost) || string.IsNullOrEmpty(_fromEmail))
+        if (string.IsNullOrWhiteSpace(_smtpHost) || string.IsNullOrWhiteSpace(_fromEmail) ||
+            string.IsNullOrWhiteSpace(_smtpPass) || _smtpPass == "SG.xxxxx")
         {
             // In production, this should be logged or surfaced
             return;
         }
 
-        var client = new SmtpClient(_smtpHost, _smtpPort)
+        using var client = new SmtpClient(_smtpHost, _smtpPort)
         {
             EnableSsl = true,
             Credentials = new System.Net.NetworkCredential(_smtpUser, _smtpPass),
         };
 
-        var mail = new MailMessage
+        using var mail = new MailMessage
         {
             From = new MailAddress(_fromEmail, _fromName ?? "NexusPlay"),
             Subject = subject,

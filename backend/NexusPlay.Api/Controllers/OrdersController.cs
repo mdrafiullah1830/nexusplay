@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
@@ -18,18 +19,21 @@ public class OrdersController : ControllerBase
     private readonly OrderEventService _events;
     private readonly IEmailService _emails;
     private readonly ISmsService _sms;
+    private readonly ILogger<OrdersController> _logger;
 
     private const decimal FreeDeliveryThreshold = 5000;
     private const decimal StandardDeliveryFee = 120;
 
     public OrdersController(IOrderRepository orders, IProductRepository products,
-        OrderEventService events, IEmailService emails, ISmsService sms)
+        OrderEventService events, IEmailService emails, ISmsService sms,
+        ILogger<OrdersController> logger)
     {
         _orders = orders;
         _products = products;
         _events = events;
         _emails = emails;
         _sms = sms;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -97,7 +101,7 @@ public class OrdersController : ControllerBase
             DeliveryFee = deliveryFee,
             Total = subtotal + deliveryFee,
             PaymentMethod = method,
-            BkashTrxId = method == "bkash" ? req.BkashTrxId.Trim() : null,
+            BkashTrxId = method == "bkash" ? req.BkashTrxId?.Trim() : null,
             Status = method == "bkash" ? "awaiting-verification" : "pending",
         };
 
@@ -113,7 +117,16 @@ public class OrdersController : ControllerBase
         await _orders.CreateAsync(order, ct);
 
         // Send confirmation email & SMS
-        await SendOrderConfirmation(order);
+        try
+        {
+            await SendOrderConfirmation(order);
+        }
+        catch (Exception ex)
+        {
+            // The order is already stored; a notification failure must not
+            // make the customer retry and create a second order.
+            _logger.LogWarning(ex, "Order confirmation failed for {OrderNo}", order.OrderNo);
+        }
 
         return CreatedAtAction(nameof(Track), new { orderNo = order.OrderNo }, order);
     }
@@ -126,20 +139,25 @@ public class OrdersController : ControllerBase
         // Email confirmation
         if (!string.IsNullOrEmpty(email))
         {
-            var subject = "NexusPlay Order Confirmation";
+            var subject = "CtrlZoneBD Order Confirmation";
+            var customerName = System.Net.WebUtility.HtmlEncode(order.Customer.Name);
+            var address = System.Net.WebUtility.HtmlEncode(order.Customer.Address);
+            var city = System.Net.WebUtility.HtmlEncode(order.Customer.City);
+            var area = System.Net.WebUtility.HtmlEncode(order.Customer.Area);
+            var contact = System.Net.WebUtility.HtmlEncode(order.Customer.Email);
             var body = $"""
                <html>
                  <body>
-                   <h2>🎉 Thank you for your order, {order.Customer.Name}!</h2>
+                   <h2>🎉 Thank you for your order, {customerName}!</h2>
                    <p>Your order has been received.</p>
                    <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
                      <tr><td style="padding: 8px;"><strong>Order Number</strong></td><td style="padding: 8px;"><strong>{order.OrderNo}</strong></td></tr>
                      <tr><td style="padding: 8px;"><strong>Payment Method</strong></td><td style="padding: 8px;">{order.PaymentMethod}</td></tr>
                      <tr><td style="padding: 8px;"><strong>Total</strong></td><td style="padding: 8px;">BDT {order.Total:N2}</td></tr>
                    </table>
-                   <p><strong>Track your order:</strong> <a href="https://nexusplay.com/track?orderNo={order.OrderNo}">https://nexusplay.com/track?orderNo={order.OrderNo}</a></p>
-                   <p><strong>Delivery:</strong> {order.Customer.Address}{(order.Customer.City != null ? $", {order.Customer.City}" : "")}{(order.Customer.Area != null ? $", {order.Customer.Area}" : "")}</p>
-                   {(order.Customer.Email != null ? $"<p><strong>Contact:</strong> {order.Customer.Email}</p>" : "")}
+                   <p><strong>Track your order:</strong> <a href="https://ctrlzonebd.com/track.html?orderNo={order.OrderNo}">https://ctrlzonebd.com/track.html?orderNo={order.OrderNo}</a></p>
+                   <p><strong>Delivery:</strong> {address}{(order.Customer.City != null ? $", {city}" : "")}{(order.Customer.Area != null ? $", {area}" : "")}</p>
+                   {(order.Customer.Email != null ? $"<p><strong>Contact:</strong> {contact}</p>" : "")}
                  </body>
                </html>
                """;
@@ -150,7 +168,7 @@ public class OrdersController : ControllerBase
         // SMS confirmation
         if (!string.IsNullOrEmpty(phone))
         {
-            var smsBody = $"NexusPlay Order Confirmed: {order.OrderNo} · Total BDT {order.Total:N2}";
+            var smsBody = $"CtrlZoneBD Order Confirmed: {order.OrderNo} · Total BDT {order.Total:N2}";
             await _sms.SendAsync(phone, smsBody);
         }
     }

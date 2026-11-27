@@ -17,7 +17,7 @@ export const products: Product[] = [
     stock: "in-stock",
     rating: 4.6,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/8BitDo_Ultimate_2c/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/8BitDo_Ultimate_2c/01_angle.png",
     ],
   },
   {
@@ -33,7 +33,7 @@ export const products: Product[] = [
     advance: 1000,
     rating: 4.9,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_G7_Pro_8K_PC_Phantom_Blade_Zero_Limited_Edition/01_angle.webp",
     ],
   },
   {
@@ -49,7 +49,7 @@ export const products: Product[] = [
     advance: 1500,
     rating: 4.8,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_6_Pro/01_angle.webp",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Apex_6_Pro/01_angle.webp",
     ],
   },
   {
@@ -65,7 +65,7 @@ export const products: Product[] = [
     advance: 1500,
     rating: 4.9,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_6_Pro_Shadow_Blade_Zero_Limited_Edition/01_angle.webp",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Apex_6_Pro_Shadow_Blade_Zero_Limited_Edition/01_angle.webp",
     ],
   },
   {
@@ -81,7 +81,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Cyclone_2/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_Cyclone_2/01_angle.png",
     ],
   },
   {
@@ -97,7 +97,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_G7_pro/01_angle.png",
     ],
   },
   {
@@ -112,7 +112,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.8,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro_Wuchang_Limited_edition/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_G7_pro_Wuchang_Limited_edition/01_angle.png",
     ],
   },
   {
@@ -127,7 +127,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_Pro_8k_PC_Black_Edition/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_G7_Pro_8k_PC_Black_Edition/01_angle.png",
     ],
   },
   {
@@ -142,7 +142,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.8,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_G7_pro_8k_pc_Aimlabs_edition/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_G7_pro_8k_pc_Aimlabs_edition/01_angle.png",
     ],
   },
   {
@@ -157,7 +157,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.5,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Tarantula_8k_pc/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_Tarantula_8k_pc/01_angle.png",
     ],
   },
   {
@@ -172,7 +172,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.8,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Vader_5_pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Vader_5_pro/01_angle.png",
     ],
   },
   {
@@ -187,7 +187,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_5/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Apex_5/01_angle.png",
     ],
   },
   {
@@ -203,7 +203,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.6,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Dock_2_Pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Dock_2_Pro/01_angle.png",
     ],
   },
   {
@@ -218,7 +218,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.5,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_BS2_Pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_BS2_Pro/01_angle.png",
     ],
   },
   {
@@ -233,7 +233,7 @@ export const products: Product[] = [
     stock: "pre-order",
     rating: 4.6,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_BS3_Pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_BS3_Pro/01_angle.png",
     ],
   },
   {
@@ -249,7 +249,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/8BitDo_Ultimate_2/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/8BitDo_Ultimate_2/01_angle.png",
     ],
   },
   {
@@ -265,7 +265,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.4,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/GameSir_Nova_2_lite/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/GameSir_Nova_2_lite/01_angle.png",
     ],
   },
   {
@@ -281,7 +281,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.8,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Vader_5_pro_with_Dock/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Vader_5_pro_with_Dock/01_angle.png",
     ],
   },
   {
@@ -297,7 +297,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.7,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Apex_5_With_Dock/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Apex_5_With_Dock/01_angle.png",
     ],
   },
   {
@@ -312,7 +312,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.5,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/Flydigi_Direwolf_4/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/Flydigi_Direwolf_4/01_angle.png",
     ],
   },
   {
@@ -328,7 +328,7 @@ export const products: Product[] = [
     stock: "out-of-stock",
     rating: 4.3,
     imageUrls: [
-      "https://raw.githubusercontent.com/mdrafiullah1830/nexusplay/main/product_images/EasySMX_XO5_Pro/01_angle.png",
+      "https://ctrlzonebd-data.2251081204.workers.dev/images/product_images/EasySMX_XO5_Pro/01_angle.png",
     ],
   },
   {
