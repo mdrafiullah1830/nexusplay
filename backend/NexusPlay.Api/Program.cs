@@ -27,7 +27,12 @@ if (!builder.Environment.IsDevelopment())
     var jwtSecret = builder.Configuration["Jwt:Secret"];
     var adminPassword = builder.Configuration["Admin:Password"];
     if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret == "nexusplay-dev-secret-key-change-in-production-0123456789")
-        throw new InvalidOperationException("Set a unique Jwt:Secret for production");
+    {
+        var envStatus = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("Jwt__Secret"))
+            ? "missing or empty"
+            : "present";
+        throw new InvalidOperationException($"Set a unique Jwt:Secret for production (Jwt__Secret environment variable: {envStatus}; effective configuration: {(string.IsNullOrWhiteSpace(jwtSecret) ? "empty" : "development default")})");
+    }
     if (string.IsNullOrWhiteSpace(adminPassword) || adminPassword == "Admin@123")
         throw new InvalidOperationException("Set a unique Admin:Password for production");
 }
