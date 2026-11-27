@@ -184,3 +184,28 @@ PUT    /api/admin/orders/{id}/status  { status, note? }  (Bearer · admin)
 - The bKash flow is intentionally **manual** (TrxID verification by admin) — no
   payment gateway integration.
 - JWT expiry defaults to 7 days (`Jwt:ExpiryMinutes`).
+## 🎨 UI Design Guidelines (Apple + Nike)
+
+Apple‑style UI  
+- Minimalist layout with generous whitespace.  
+- Hero sections featuring full‑width product images.  
+- Card‑based product tiles with subtle shadows.  
+- Clean sans‑serif typography (San Francisco / Inter) and a neutral colour palette (white/light gray background, accent colours derived from product photos).  
+- Simple navigation, sticky top bar, and lazy‑loaded images (srcset, IntersectionObserver).
+
+Nike‑style UI  
+- Bold, high‑contrast colour accents (red, orange, electric blue) used for CTA buttons, badges, and highlights.  
+- Dynamic hero carousels or video loops that convey motion and energy.  
+- Badge‑styled category tiles and interactive filter/sort widgets.  
+- Custom sporty sans‑serif typeface (Nike Sans) with strong weight contrast for headings.  
+- Rich JavaScript animations (CSS transitions, GSAP) for hover effects and product showcases.
+
+Combining the two for ctrlzonebd.com  
+1. Base layout – adopt Apple’s clean grid and whitespace. Use a simple card component for product listings.  
+2. Hero section – replace static hero image with a short looping video or animated slider (Nike style) while keeping the minimal background.  
+3. Accent colours – pull primary accent colours from product images (e.g., a red shoe, orange jacket) and apply them to CTA buttons, badge outlines, and hover states.  
+4. Typography – keep the primary font as a clean system sans‑serif (Apple) for body copy, and use a stronger, sport‑oriented font for headings or promotional sections (Nike).  
+5. Interactive components – implement subtle hover animations (fade‑in, scale) on cards (Apple) and more pronounced transition effects on promotional banners (Nike).  
+6. Responsiveness – ensure the grid collapses gracefully on mobile; keep hero images responsive with srcset.  
+
+By merging Apple’s restrained, premium feel with Nike’s vibrant, motion‑driven elements, ctrlzonebd.com can deliver a modern, engaging storefront that feels both trustworthy and energetic.
