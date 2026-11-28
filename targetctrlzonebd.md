@@ -18,7 +18,7 @@ Baseline main 6bb6592b1e3ac583f7402ab5432044af617bf9c5. Key findings: layered SC
 ## Phase 0B — Commerce reliability [in progress]
 - [x] Create fix/phase-0b-commerce branch.
 - [x] Checkout source fix cde45451cfcd2848a8fb3d0f324487965589017c: route COD/manual bKash to /orders, use server response, disable unsupported gateway UI, prevent repeat submit, escape checkout HTML. Build/E2E pending.
-- [ ] My Orders: add orders.html to vite.config.ts, orders route to main.ts, new pages/orders.ts; paginate and filter by authenticated user in both D1 and Mongo repositories; fix claim mapping in OrdersController; test isolation and empty/error states.
+- [ ] My Orders (source implementation committed; build and isolation tests pending): add orders.html to vite.config.ts, orders route to main.ts, new pages/orders.ts; paginate and filter by authenticated user in both D1 and Mongo repositories; fix claim mapping in OrdersController; test isolation and empty/error states.
 - [ ] Wishlist: pages/product.ts + new shared service; authenticated API sync, guest merge, direct ID loading, account isolation; preserve guest data.
 - [ ] Tracking: pages/track.ts, services/api.ts, OrdersController, repository phone validation; require full phone or authorized owner, protect SSE or use authenticated polling, no public order data leakage.
 - [ ] Payment: review PaymentsController/PaymentService and admin status transitions; provider-specific feature flags, amount/currency/order binding, idempotency, no unsupported Stripe or unverified SSLCOMMERZ options. Keep manual bKash and COD.
@@ -47,4 +47,5 @@ package.json, automated frontend/backend tests, CI, README, ANIMATION_STRATEGY.m
 ## Status log
 - 2026-11-28: Phase 0A architecture/source review; no runtime verification.
 - 2026-11-28: Phase 0B checkout fix committed on isolated branch, tests pending.
-- Next: complete My Orders and tracking privacy fixes, add tests, then continue remaining tasks in sequence.
+- My Orders: build/router entry, authenticated pagination, D1 JSON user filter and Mongo user filter implemented; test pending.
+- Next: tracking privacy fixes, wishlist sync and tests; then continue remaining tasks in sequence.

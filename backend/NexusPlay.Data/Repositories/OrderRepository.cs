@@ -43,6 +43,8 @@ public class OrderRepository : IOrderRepository
     public async Task<PagedResult<Order>> SearchAsync(OrderQuery q, CancellationToken ct = default)
     {
         var filter = Builders<Order>.Filter.Empty;
+        if (!string.IsNullOrWhiteSpace(q.UserId))
+            filter &= Builders<Order>.Filter.Eq(o => o.UserId, q.UserId);
 
         if (!string.IsNullOrWhiteSpace(q.Status))
             filter &= Builders<Order>.Filter.Eq(o => o.Status, q.Status);

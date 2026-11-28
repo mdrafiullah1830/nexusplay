@@ -84,7 +84,7 @@ public class OrdersController : ControllerBase
         {
             OrderNo = GenerateOrderNo(),
             UserId = User.Identity?.IsAuthenticated == true
-                ? User.FindFirstValue("sub")
+                ? (User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))
                 : null,
             Customer = new CustomerInfo
             {
@@ -225,16 +225,7 @@ public class OrdersController : ControllerBase
         var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var all = await _orders.SearchAsync(new OrderQuery { Page = 1, PageSize = 100 }, ct);
-        var mine = all.Items.Where(o => o.UserId == userId).ToList();
-
-        return Ok(new PagedResult<Order>
-        {
-            Items = mine,
-            Total = mine.Count,
-            Page = page,
-            PageSize = 100,
-        });
+        return Ok(await _orders.SearchAsync(new OrderQuery { UserId = userId, Page = page, PageSize = 20 }, ct));
     }
 
     private static string GenerateOrderNo()

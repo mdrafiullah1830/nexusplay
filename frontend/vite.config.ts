@@ -25,6 +25,7 @@ export default defineConfig({
         cart: page("cart"),
         checkout: page("checkout"),
         track: page("track"),
+        orders: page("orders"),
         wishlist: page("wishlist"),
         login: page("login"),
         register: page("register"),

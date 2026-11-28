@@ -104,6 +104,7 @@ public sealed class D1OrderRepository(D1Client db) : IOrderRepository
     public async Task<PagedResult<Order>> SearchAsync(OrderQuery q, CancellationToken ct = default)
     {
         var where = new List<string>(); var args = new List<object?>();
+        if (!string.IsNullOrWhiteSpace(q.UserId)) { where.Add("json_extract(json, '$.userId')=?"); args.Add(q.UserId); }
         if (!string.IsNullOrWhiteSpace(q.Status)) { where.Add("status=?"); args.Add(q.Status); }
         if (!string.IsNullOrWhiteSpace(q.Q))
         {

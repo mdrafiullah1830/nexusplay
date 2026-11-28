@@ -11,6 +11,7 @@ import { initShopPage } from "./pages/shop";
 import { initProductPage, initWishlistPage } from "./pages/product";
 import { initCartPage } from "./pages/cart";
 import { initCheckoutPage } from "./pages/checkout";
+import { initOrdersPage } from "./pages/orders";
 import { initTrackPage } from "./pages/track";
 import { initAuthPages } from "./pages/auth";
 import { initAdminPage } from "./pages/admin";
@@ -109,6 +110,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       break;
     case "checkout":
       initCheckoutPage();
+      break;
+    case "orders":
+      initOrdersPage();
       break;
     case "track":
       initTrackPage();
