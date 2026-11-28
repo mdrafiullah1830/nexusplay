@@ -1,6 +1,10 @@
 {
   "name": "ctrlzonebd",
   "compatibility_date": "2026-11-27",
+  "build": {
+    "command": "npm ci && npm run build",
+    "cwd": "frontend"
+  },
   "assets": {
     "directory": "./frontend/dist"
   }
