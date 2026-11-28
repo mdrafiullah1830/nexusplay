@@ -9,6 +9,10 @@ import type { Order } from "../types";
 
 const BKASH_NUMBER = "01782577251";
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch] ?? ch));
+}
+
 function validatePhone(phone: string): boolean {
   return /^01[3-9]\d{8}$/.test(phone.replace(/\s|-/g, ""));
 }
@@ -45,14 +49,14 @@ export function initCheckoutPage(): void {
           <h2>Contact Information</h2>
           <div class="form-grid">
             <label>Full Name *
-              <input name="name" type="text" required value="${user?.name ?? ""}" placeholder="Your name" />
+              <input name="name" type="text" required value="${escapeHtml(user?.name ?? "")}" placeholder="Your name" />
             </label>
             <label>Phone *
-              <input name="phone" type="tel" required value="${user?.phone ?? ""}"
+              <input name="phone" type="tel" required value="${escapeHtml(user?.phone ?? "")}"
                      placeholder="01XXXXXXXXX" />
             </label>
             <label class="span-2">Email
-              <input name="email" type="email" value="${user?.email ?? ""}" placeholder="you@example.com" />
+              <input name="email" type="email" value="${escapeHtml(user?.email ?? "")}" placeholder="you@example.com" />
             </label>
           </div>
         </section>
@@ -94,25 +98,6 @@ export function initCheckoutPage(): void {
             </div>
           </label>
 
-          <label class="pay-option">
-            <input type="radio" name="payment" value="card" />
-            <div>
-              <strong>💳 Card / Gateway</strong>
-              <span>Pay securely via SSLCOMMERZ or Stripe</span>
-            </div>
-          </label>
-
-          <div id="gateway-options" class="gateway-options" hidden>
-            <label class="gateway-option">
-              <input type="radio" name="paymentGateway" value="sslcommerz" checked />
-              <span>SSLCOMMERZ (Local)</span>
-            </label>
-            <label class="gateway-option">
-              <input type="radio" name="paymentGateway" value="stripe" />
-              <span>Stripe (International)</span>
-            </label>
-          </div>
-
           <div class="bkash-panel" id="bkash-panel" hidden>
             <ol class="bkash-steps">
               <li>Open bKash → <strong>Send Money</strong></li>
@@ -138,7 +123,7 @@ export function initCheckoutPage(): void {
           .map(
             (l) => `
           <div class="mini-line">
-            <span>${l.name}${l.colour ? ` (${l.colour})` : ""} × ${l.qty}</span>
+            <span>${escapeHtml(l.name)}${l.colour ? ` (${escapeHtml(l.colour)})` : ""} × ${l.qty}</span>
             <span>${formatBDT(l.price * l.qty)}</span>
           </div>`,
           )
@@ -149,15 +134,12 @@ export function initCheckoutPage(): void {
       </aside>
     </div>`;
 
-  // Toggle bKash panel + gateway options
+  // Toggle bKash panel
   const bkashPanel = document.getElementById("bkash-panel") as HTMLElement;
-  const gatewayPanel = document.getElementById("gateway-options") as HTMLElement;
   root.querySelectorAll<HTMLInputElement>("input[name='payment']").forEach((radio) =>
     radio.addEventListener("change", () => {
       const isBkash = radio.value === "bkash" && radio.checked;
-      const isCard = radio.value === "card" && radio.checked;
       bkashPanel.hidden = !isBkash;
-      gatewayPanel.hidden = !isCard;
     }),
   );
 
@@ -168,6 +150,7 @@ export function initCheckoutPage(): void {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (placeBtn.disabled) return;
     errorBox.hidden = true;
 
     const data = new FormData(form);
@@ -192,16 +175,8 @@ export function initCheckoutPage(): void {
     placeBtn.textContent = "Placing order…";
 
     try {
-      const paymentGateway = payment === "card"
-        ? String(data.get("paymentGateway") ?? "sslcommerz")
-        : undefined;
-
-      const result = await api.post<{
-        orderNo: string;
-        gatewayUrl?: string;
-        sessionId?: string;
-        total: number;
-      }>("/api/payments/initiate", {
+      if (payment !== "cod" && payment !== "bkash") throw new Error("Unsupported payment method");
+      const order = await api.post<Order>("/orders", {
         customer: {
           name,
           phone,
@@ -218,34 +193,11 @@ export function initCheckoutPage(): void {
         })),
         paymentMethod: payment,
         bkashTrxId: payment === "bkash" ? trx : undefined,
-        paymentGateway,
       }, true);
 
+      if (!order?.orderNo) throw new Error("Order response missing order number");
       cart.clear();
-
-      if (result.gatewayUrl) {
-        // Redirect to payment gateway
-        window.location.href = result.gatewayUrl;
-        return;
-      }
-
-      // COD or direct payment — show success immediately
-      renderSuccess({
-        id: "",
-        orderNo: result.orderNo,
-        userId: undefined,
-        customer: { name, phone, address },
-        items: [],
-        subtotal: 0,
-        deliveryFee: 0,
-        total: result.total,
-        paymentMethod: payment,
-        bkashTrxId: payment === "bkash" ? trx : undefined,
-        status: payment === "bkash" ? "awaiting-verification" : "confirmed",
-        tracking: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as unknown as Order);
+      renderSuccess(order);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
       fail(msg);
@@ -259,18 +211,18 @@ export function initCheckoutPage(): void {
       <div class="container">
         <div class="order-success">
           <div class="order-success__icon">✓</div>
-          <h1>Order Confirmed!</h1>
-          <p>Thank you, ${order.customer.name}. We've received your order.</p>
+          <h1>Order Received!</h1>
+          <p>Thank you, ${escapeHtml(order.customer.name)}. We've received your order.</p>
 
           <div class="order-success__no">
             <span>Order Number</span>
-            <strong>${order.orderNo}</strong>
+            <strong>${escapeHtml(order.orderNo)}</strong>
           </div>
 
           ${
             order.paymentMethod === "bkash"
               ? `<div class="order-success__note">
-                   bKash payment <strong>${order.bkashTrxId}</strong> is pending verification.
+                   bKash payment <strong>${escapeHtml(order.bkashTrxId ?? "")}</strong> is pending verification.
                    We'll confirm via phone shortly.
                  </div>`
               : `<div class="order-success__note">Payment: <strong>Cash on Delivery</strong></div>`
@@ -279,7 +231,7 @@ export function initCheckoutPage(): void {
           <div class="order-success__total">Total: <strong>${formatBDT(order.total)}</strong></div>
 
           <div class="order-success__note order-success__note--info">
-            📧 Confirmation email & SMS sent to ${order.customer.name} (${order.customer.phone})
+            Keep your order number for tracking.
           </div>
 
           <div class="order-success__actions">
