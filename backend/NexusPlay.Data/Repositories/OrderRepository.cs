@@ -30,7 +30,7 @@ public class OrderRepository : IOrderRepository
 
         return await _orders.Find(o =>
                 o.OrderNo == no &&
-                (o.Customer.Phone == ph || o.Customer.Phone.EndsWith(ph)))
+                o.Customer.Phone == ph)
             .FirstOrDefaultAsync(ct);
     }
 

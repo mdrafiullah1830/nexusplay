@@ -177,45 +177,17 @@ public class OrdersController : ControllerBase
     public async Task<ActionResult<Order>> Track([FromQuery] string orderNo,
         [FromQuery] string phone, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(phone))
+        if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(phone) || !System.Text.RegularExpressions.Regex.IsMatch(phone.Trim(), @"^01[3-9][0-9]{8}$"))
             return BadRequest(new { message = "orderNo and phone are required" });
 
+        Response.Headers["Cache-Control"] = "no-store";
         var order = await _orders.FindAsync(orderNo, phone, ct);
         return order is null
             ? NotFound(new { message = "No order found for that order number and phone number" })
             : Ok(order);
     }
 
-    [HttpGet("track/stream/{orderNo}")]
-    [AllowAnonymous]
-    public async Task Stream(string orderNo, CancellationToken ct)
-    {
-        var order = await _orders.FindByOrderNoAsync(orderNo, ct);
-        if (order is null)
-        {
-            HttpContext.Response.StatusCode = 404;
-            await HttpContext.Response.WriteAsync("Order not found", ct);
-            return;
-        }
-
-        HttpContext.Response.StatusCode = 200;
-        HttpContext.Response.Headers["Content-Type"] = "text/event-stream";
-        HttpContext.Response.Headers["Cache-Control"] = "no-cache";
-        HttpContext.Response.Headers["Connection"] = "keep-alive";
-        HttpContext.Response.Headers["X-Accel-Buffering"] = "no";
-
-        var initial = "event: order-status" + "\n" +
-                      "data: {\"status\":\"" + order.Status +
-                      "\",\"note\":\"Stream connected\",\"at\":\"" + DateTime.UtcNow.ToString("o") + "\"}" + "\n\n";
-        await HttpContext.Response.WriteAsync(initial, ct);
-        await HttpContext.Response.Body.FlushAsync(ct);
-
-        await foreach (var evt in _events.SubscribeAsync(orderNo, ct))
-        {
-            await HttpContext.Response.WriteAsync(evt, ct);
-            await HttpContext.Response.Body.FlushAsync(ct);
-        }
-    }
+    // Tracking uses the verified order-and-phone endpoint instead of a public SSE stream.
 
     [Authorize]
     [HttpGet("my")]

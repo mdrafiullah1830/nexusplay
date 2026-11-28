@@ -155,7 +155,7 @@ export function initCheckoutPage(): void {
 
     const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
-    const phone = String(data.get("phone") ?? "").trim();
+    const phone = String(data.get("phone") ?? "").replace(/\s|-/g, "");
     const address = String(data.get("address") ?? "").trim();
     const payment = String(data.get("payment") ?? "cod");
     const trx = String(data.get("bkashTrxId") ?? "").trim();

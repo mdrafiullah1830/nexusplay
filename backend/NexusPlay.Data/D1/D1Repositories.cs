@@ -96,7 +96,7 @@ public sealed class D1OrderRepository(D1Client db) : IOrderRepository
     public async Task<Order?> FindAsync(string orderNo, string phone, CancellationToken ct = default)
     {
         var order = await FindByOrderNoAsync(orderNo, ct);
-        return order is not null && order.Customer.Phone.EndsWith(phone.Trim(), StringComparison.Ordinal)
+        return order is not null && string.Equals(order.Customer.Phone, phone.Trim(), StringComparison.Ordinal)
             ? order : null;
     }
     public async Task<Order?> FindByOrderNoAsync(string orderNo, CancellationToken ct = default) =>
