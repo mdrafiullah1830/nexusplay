@@ -9,7 +9,7 @@ body[data-page="home"] {
   --signal-ink-soft: #111a2a;
   --signal-paper: #080c15;
   --signal-white: #f7f9ff;
-  --signal-blue: #3385ff;
+  --signal-blue: var(--color-accent);
   --signal-line: rgba(255, 255, 255, 0.12);
   --signal-muted: #8d9bb2;
   background: var(--signal-paper);
@@ -1063,7 +1063,7 @@ body[data-page="home"] .hero__product-stage > img {
   letter-spacing: 0.16em;
 }
 .hero__hud-readout strong {
-  color: #176bff;
+  color: var(--color-accent-hover);
   font-family: var(--font-display);
   font-size: 0.78rem;
   letter-spacing: 0.03em;
@@ -1262,7 +1262,7 @@ body[data-page="home"] .hero__product-stage.is-dragging::after { opacity: 0.9; }
   border: 1px solid rgba(51, 133, 255, 0.2);
   border-radius: 0;
   background: rgba(255, 255, 250, 0.72);
-  color: #176bff;
+  color: var(--color-accent-hover);
   font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 900;
@@ -1277,8 +1277,8 @@ body[data-page="home"] .hero__product-stage.is-dragging::after { opacity: 0.9; }
 }
 .hero__viewer-tools button:hover,
 .hero__viewer-tools button:focus-visible {
-  border-color: #176bff;
-  background: #176bff;
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
   color: #b8d5ff;
 }
 .hero__viewer-tools button:focus-visible {
@@ -1322,7 +1322,7 @@ body[data-page="home"] {
   --signal-ink-soft: #101827;
   --signal-paper: #070b13;
   --signal-white: #f7f9ff;
-  --signal-blue: #3385ff;
+  --signal-blue: var(--color-accent);
   --signal-line: rgba(255, 255, 255, 0.13);
   --signal-muted: #91a0b8;
   background: #070b13;
@@ -1335,10 +1335,10 @@ body[data-page="home"] .navbar {
 body[data-page="home"] .navbar__logo,
 body[data-page="home"] .navbar__link,
 body[data-page="home"] .navbar__icon-btn { color: #f7f9ff; }
-body[data-page="home"] .navbar__logo span { color: #3385ff; }
-body[data-page="home"] .navbar__link::after { background: #3385ff; }
+body[data-page="home"] .navbar__logo span { color: var(--color-accent); }
+body[data-page="home"] .navbar__link::after { background: var(--color-accent); }
 body[data-page="home"] .navbar__cart-count,
-body[data-page="home"] .navbar__wishlist-count { background: #3385ff; color: #fff; }
+body[data-page="home"] .navbar__wishlist-count { background: var(--color-accent); color: #fff; }
 body[data-page="home"] .megamenu,
 body[data-page="home"] .mobile-menu,
 body[data-page="home"] .search-panel {
@@ -1366,13 +1366,13 @@ body[data-page="home"] .hero__copy {
 }
 body[data-page="home"] .hero__title { max-width: 800px; font-size: clamp(3.8rem, 8vw, 8rem); }
 body[data-page="home"] .hero__title-accent {
-  color: #3385ff;
-  -webkit-text-fill-color: #3385ff;
+  color: var(--color-accent);
+  -webkit-text-fill-color: var(--color-accent);
 }
 body[data-page="home"] .hero__eyebrow-mark,
 body[data-page="home"] .hero__command-dot,
 body[data-page="home"] .hero__status-light,
-body[data-page="home"] .hero__specs i { background: #3385ff; }
+body[data-page="home"] .hero__specs i { background: var(--color-accent); }
 body[data-page="home"] .hero__media {
   min-height: 590px;
   background:
@@ -1395,7 +1395,7 @@ body[data-page="home"] .hero__hud-readout strong { color: #f7f9ff; }
 body[data-page="home"] .hero__corner--tl,
 body[data-page="home"] .hero__corner--tr,
 body[data-page="home"] .hero__corner--bl,
-body[data-page="home"] .hero__corner--br { border-color: #3385ff; }
+body[data-page="home"] .hero__corner--br { border-color: var(--color-accent); }
 body[data-page="home"] .hero__reticle,
 body[data-page="home"] .hero__reticle b { border-color: rgba(112, 174, 255, 0.3); }
 body[data-page="home"] .hero__reticle::before,
@@ -1414,8 +1414,8 @@ body[data-page="home"] .hero__viewer-tools button {
 }
 body[data-page="home"] .hero__viewer-tools button:hover,
 body[data-page="home"] .hero__viewer-tools button:focus-visible {
-  border-color: #3385ff;
-  background: #176bff;
+  border-color: var(--color-accent);
+  background: var(--color-accent-hover);
   color: #fff;
 }
 body[data-page="home"] .hero__base-line { color: #8291aa; }
@@ -1467,7 +1467,7 @@ body[data-page="home"] .section__link {
   color: #f1f5ff;
   border-color: rgba(92, 160, 255, 0.55);
 }
-body[data-page="home"] .section__link:hover { color: #8dbbff; border-color: #3385ff; }
+body[data-page="home"] .section__link:hover { color: #8dbbff; border-color: var(--color-accent); }
 body[data-page="home"] .tile {
   border: 1px solid rgba(84, 151, 255, 0.2);
   background: #101a2b;
@@ -1501,12 +1501,12 @@ body[data-page="home"] .p-card__brand { color: #80b5ff; }
 body[data-page="home"] .p-card__name,
 body[data-page="home"] .p-card__price strong { color: #f7f9ff; }
 body[data-page="home"] .p-card__meta { color: #9aa9c1; }
-body[data-page="home"] .p-card__badge { background: #3385ff; color: #fff; }
+body[data-page="home"] .p-card__badge { background: var(--color-accent); color: #fff; }
 body[data-page="home"] .p-card__badge--dark { background: #f7f9ff; color: #05070b; }
 body[data-page="home"] .p-card__badge--muted { background: #26354c; color: #d8e2f4; }
 body[data-page="home"] .p-card__btn {
-  border-color: #3385ff;
-  background: #176bff;
+  border-color: var(--color-accent);
+  background: var(--color-accent-hover);
   color: #fff;
 }
 body[data-page="home"] .p-card__btn:hover { background: #3d8cff; }
@@ -1522,7 +1522,7 @@ body[data-page="home"] .cat-tile__circle img {
 body[data-page="home"] .cat-tile__meta > span { color: #80b5ff; }
 body[data-page="home"] .cat-tile__meta strong { color: #f7f9ff; }
 body[data-page="home"] .cat-tile__meta small { color: #91a0b8; }
-body[data-page="home"] .cat-tile__arrow { background: #176bff; color: #fff; }
+body[data-page="home"] .cat-tile__arrow { background: var(--color-accent-hover); color: #fff; }
 body[data-page="home"] .cat-tile--all { background: #12315f; }
 body[data-page="home"] .cat-tile--all__mark { color: #8dbbff; }
 body[data-page="home"] .signal-support {
@@ -1533,7 +1533,7 @@ body[data-page="home"] .signal-support h2 { color: #f7f9ff; }
 body[data-page="home"] .signal-support__copy p { color: #b6c4da; }
 body[data-page="home"] .signal-support__copy a {
   color: #8dbbff;
-  border-color: #3385ff;
+  border-color: var(--color-accent);
 }
 body[data-page="home"] .footer {
   background: #03060b;
