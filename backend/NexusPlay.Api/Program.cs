@@ -22,8 +22,13 @@ using NexusPlay.Data.Repositories;
 using NexusPlay.Data.D1;
 
 var builder = WebApplication.CreateBuilder(args);
+var trustedProxies = TrustedProxyConfig.Parse(builder.Configuration["Proxy:KnownProxies"]);
 if (!builder.Environment.IsDevelopment())
 {
+    if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Environment.GetEnvironmentVariable("DOTNET_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException("Unrestricted forwarded headers are disabled. Configure Proxy:KnownProxies instead.");
+
     var jwtSecret = builder.Configuration["Jwt:Secret"];
     var adminPassword = builder.Configuration["Admin:Password"];
     if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret == "nexusplay-dev-secret-key-change-in-production-0123456789")
@@ -194,6 +199,12 @@ builder.Services.AddAuthorization();
 
 // NOTE: everything registered on builder.Services must happen BEFORE Build().
 var app = builder.Build();
+
+// Process a single X-Forwarded-For hop only when the immediate proxy's exact
+// address is configured. Confirm the full Render/Cloudflare chain in staging
+// before treating this address as the original client.
+if (trustedProxies.Length > 0)
+    app.UseForwardedHeaders(TrustedProxyConfig.CreateOptions(trustedProxies));
 
 // -- Security Headers -----------------------------------------------
 app.Use(async (context, next) =>

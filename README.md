@@ -108,6 +108,17 @@ number when changing the database schema. Existing product records are not
 overwritten by deploys: `ProductSeeder` only runs when the catalogue is empty.
 Update products through the admin API instead.
 
+### Proxy client IPs and rate limits
+
+Rate limits use the socket peer IP by default. To accept one `X-Forwarded-For`
+hop on Render, set `Proxy__KnownProxies` to the exact IP address of the proxy
+that connects to Kestrel (comma-separated if there are multiple verified peers).
+Only configure addresses observed in a test environment. The middleware ignores
+forwarded headers from other peers. Verify the resulting rate-limit partitions
+with requests from separate clients before release; a second Cloudflare hop may
+mean the forwarded address is still a proxy. Do not enable unrestricted
+`ASPNETCORE_FORWARDEDHEADERS_ENABLED` or `DOTNET_FORWARDEDHEADERS_ENABLED`.
+
 ## 🔐 Credentials
 
 | Role  | Email               | Password   |
