@@ -8,6 +8,7 @@ import { productCard } from "../components/productCard";
 import { cart, formatBDT } from "../services/cart";
 import { toast } from "../services/toast";
 import type { Product, PagedResult } from "../types";
+import { escapeHtml } from "../utils/html";
 
 const EMOJI: Record<string, string> = {
   controllers: "🎮",
@@ -45,14 +46,14 @@ function galleryHtml(p: Product): string {
   const images = p.imageUrls?.length ? p.imageUrls : [];
   const hasImages = images.length > 0;
   const firstView = hasImages
-    ? `<img src="${images[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" />`
+    ? `<img src="${escapeHtml(images[0])}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;" />`
     : `<span class="pd-gallery__emoji" style="transform:rotate(0deg)">${emoji}</span>`;
   const thumbs = hasImages
     ? images
         .map(
           (img, i) => `
-          <button class="pd-thumb ${i === 0 ? "is-active" : ""}" data-src="${img}">
-            <img src="${img}" alt="${p.name} ${i + 1}" style="width:100%;height:100%;object-fit:cover;" />
+          <button class="pd-thumb ${i === 0 ? "is-active" : ""}" data-src="${escapeHtml(img)}">
+            <img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)} ${i + 1}" style="width:100%;height:100%;object-fit:cover;" />
           </button>`,
         )
         .join("")
@@ -84,8 +85,8 @@ function specsHtml(p: Product): string {
     .map(
       ([k, v]) => `
       <div class="pd-spec-row">
-        <div class="pd-spec-key">${k}</div>
-        <div class="pd-spec-val">${v}</div>
+        <div class="pd-spec-key">${escapeHtml(k)}</div>
+        <div class="pd-spec-val">${escapeHtml(v)}</div>
       </div>`,
     )
     .join("");
@@ -222,15 +223,15 @@ function mount(product: Product): void {
 
   root.innerHTML = `
     <div class="container pd-breadcrumb">
-      <a href="/">Home</a> / <a href="/shop.html">Shop</a> / <span>${product.brand}</span>
+      <a href="/">Home</a> / <a href="/shop.html">Shop</a> / <span>${escapeHtml(product.brand)}</span>
     </div>
 
     <div class="container pd-layout">
       ${galleryHtml(product)}
 
       <div class="pd-info">
-        <div class="pd-brand">${product.brand}</div>
-        <h1 class="pd-title">${product.name}</h1>
+        <div class="pd-brand">${escapeHtml(product.brand)}</div>
+        <h1 class="pd-title">${escapeHtml(product.name)}</h1>
 
         <div class="pd-rating">
           <span class="stars">${stars(product.rating)}</span>
@@ -249,12 +250,12 @@ function mount(product: Product): void {
           product.colours?.length
             ? `
             <div class="pd-option">
-              <div class="pd-option__label">Colour · <span id="colour-label">${selectedColour ?? "Choose one"}</span></div>
+              <div class="pd-option__label">Colour · <span id="colour-label">${escapeHtml(selectedColour ?? "Choose one")}</span></div>
               <div class="pd-colours" id="colour-picker">
                 ${product.colours
                   .map(
                     (c) =>
-                      `<button class="pd-colour ${c === selectedColour ? "is-active" : ""}" data-colour="${c}">${c}</button>`,
+                      `<button class="pd-colour ${c === selectedColour ? "is-active" : ""}" data-colour="${escapeHtml(c)}">${escapeHtml(c)}</button>`,
                   )
                   .join("")}
               </div>
@@ -282,7 +283,7 @@ function mount(product: Product): void {
 
         ${
           product.description
-            ? `<p class="pd-desc">${product.description}</p>`
+            ? `<p class="pd-desc">${escapeHtml(product.description)}</p>`
             : `<p class="pd-desc">Genuine product with official warranty support. Delivered across Bangladesh — cash on delivery or bKash.</p>`
         }
       </div>
@@ -339,7 +340,7 @@ function mount(product: Product): void {
       const src = thumb.dataset.src;
       const rotate = thumb.dataset.rotate;
       if (main && src) {
-        main.innerHTML = `<img src="${src}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;" />`;
+        main.innerHTML = `<img src="${escapeHtml(src)}" alt="${escapeHtml(product.name)}" style="width:100%;height:100%;object-fit:cover;" />`;
       } else if (main && rotate !== undefined) {
         const emoji = main.querySelector<HTMLElement>(".pd-gallery__emoji");
         if (emoji) emoji.style.transform = `rotate(${rotate})`;

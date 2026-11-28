@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
@@ -41,6 +42,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("OrderPolicy")]
     public async Task<ActionResult<Order>> Place(PlaceOrderRequest req, CancellationToken ct)
     {
         var idempotencyKey = Request.Headers["Idempotency-Key"].ToString();

@@ -4,6 +4,7 @@
 import type { Product } from "../types";
 import { cart, formatBDT } from "../services/cart";
 import { toast } from "../services/toast";
+import { escapeHtml } from "../utils/html";
 
 const CATEGORY_EMOJI: Record<string, string> = {
   controllers: "🎮",
@@ -84,19 +85,19 @@ export function productCard(p: Product): string {
   const firstImage = p.imageUrls?.[0] || p.image || LOCAL_PRODUCT_ART[p.id];
 
   return `
-    <article class="p-card reveal reveal--card" data-id="${p.id}" tabindex="0">
+    <article class="p-card reveal reveal--card" data-id="${escapeHtml(p.id)}" tabindex="0">
       <div class="p-card__media">
         ${badge ? `<span class="p-card__badge ${badge.cls}">${badge.text}</span>` : ""}
         <div class="p-card__img" style="background:${tint};">
           ${firstImage
-            ? `<img src="${firstImage}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" />`
+            ? `<img src="${escapeHtml(firstImage)}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;" />`
             : `<span style="filter:drop-shadow(0 8px 16px rgba(0,0,0,.4));font-size:clamp(3.5rem,7vw,5.5rem);">${CATEGORY_EMOJI[p.category] ?? "🎮"}</span>`}
         </div>
       </div>
       <div class="p-card__body">
-        <div class="p-card__brand">${p.brand}</div>
-        <div class="p-card__name">${p.name}</div>
-        <div class="p-card__meta">${metaFor(p)}</div>
+        <div class="p-card__brand">${escapeHtml(p.brand)}</div>
+        <div class="p-card__name">${escapeHtml(p.name)}</div>
+        <div class="p-card__meta">${escapeHtml(metaFor(p))}</div>
         <div class="p-card__price">
           <strong>${formatBDT(p.price)}</strong>
           ${p.oldPrice > p.price ? `<del>${formatBDT(p.oldPrice)}</del>` : ""}

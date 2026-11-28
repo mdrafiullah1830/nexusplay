@@ -98,6 +98,19 @@ function announceMarkup(): string {
     </div>`;
 }
 
+function themeToggleMarkup(id: string, extraClass = ""): string {
+    if (!["home", "shop"].includes(document.body.dataset.page ?? "")) return "";
+
+    const mode = getTheme();
+    return `<button class="navbar__icon-btn navbar__theme-btn ${extraClass}" id="${id}" type="button"
+        aria-label="Switch to ${mode === "dark" ? "light" : "dark"} mode"
+        title="Switch to ${mode === "dark" ? "light" : "dark"} mode"
+        aria-pressed="${mode === "light"}">
+        <span class="navbar__theme-icon" aria-hidden="true">${mode === "dark" ? "☼" : "☾"}</span>
+        <span class="navbar__theme-label">${mode === "dark" ? "LIGHT" : "DARK"}</span>
+      </button>`;
+}
+
 // -- Mobile drawer --------------------------------------------
 function mobileMenuMarkup(): string {
   const signedIn = auth.isLoggedIn();
@@ -114,6 +127,7 @@ function mobileMenuMarkup(): string {
       <a class="mobile-menu__link" href="/shop.html">${t("nav.shop")}</a>
       <a class="mobile-menu__link" href="/track.html">${t("nav.track")}</a>
       <a class="mobile-menu__link" href="/#support">${t("nav.support")}</a>
+      <button class="mobile-menu__search" id="drawer-search" type="button">🔍 ${t("nav.search")}</button>
 
       <div class="mobile-menu__section">
         <div class="mobile-menu__title">${t("drawer.shop")}</div>
@@ -145,20 +159,13 @@ function mobileMenuMarkup(): string {
       <button class="mobile-menu__lang" type="button" data-lang-toggle>
         ${getLang() === "en" ? "বাংলা" : "English"}
       </button>
+      ${themeToggleMarkup("mobile-theme-btn", "mobile-menu__theme")}
     </div>`;
 }
 
 // -- Header markup --------------------------------------------
 function renderHeader(root: HTMLElement): void {
-  const themeToggleMarkup = ["home", "shop"].includes(document.body.dataset.page ?? "")
-    ? `<button class="navbar__icon-btn navbar__theme-btn" id="theme-btn" type="button"
-        aria-label="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
-        title="Switch to ${getTheme() === "dark" ? "light" : "dark"} mode"
-        aria-pressed="${getTheme() === "light"}">
-        <span class="navbar__theme-icon" aria-hidden="true">${getTheme() === "dark" ? "☼" : "☾"}</span>
-        <span class="navbar__theme-label">${getTheme() === "dark" ? "LIGHT" : "DARK"}</span>
-      </button>`
-    : "";
+  const themeToggle = themeToggleMarkup("theme-btn");
 
   root.innerHTML = `
     <a class="skip-link" href="#main-content">${t("skip")}</a>${announceMarkup()}
@@ -188,7 +195,7 @@ function renderHeader(root: HTMLElement): void {
             ♥<span class="navbar__wishlist-count" id="wishlist-count">${getWishlistCount()}</span>
           </a>
 
-          ${themeToggleMarkup}
+          ${themeToggle}
 
           <button class="navbar__icon-btn navbar__lang" id="lang-btn" type="button"
                   aria-label="${t("nav.language")}" title="${t("nav.language")}">
@@ -364,10 +371,9 @@ function bindClicks(root: HTMLElement, signal: AbortSignal): void {
     (event) => {
       const target = event.target as HTMLElement;
 
-      if (target.closest("#theme-btn")) {
+      if (target.closest(".navbar__theme-btn")) {
         const next = toggleTheme();
-        const button = root.querySelector<HTMLButtonElement>("#theme-btn");
-        if (button) {
+        root.querySelectorAll<HTMLButtonElement>(".navbar__theme-btn").forEach((button) => {
           const targetMode = next === "dark" ? "light" : "dark";
           const label = "Switch to " + targetMode + " mode";
           button.setAttribute("aria-label", label);
@@ -377,7 +383,7 @@ function bindClicks(root: HTMLElement, signal: AbortSignal): void {
           const text = button.querySelector<HTMLElement>(".navbar__theme-label");
           if (icon) icon.textContent = next === "dark" ? "☼" : "☾";
           if (text) text.textContent = next === "dark" ? "LIGHT" : "DARK";
-        }
+        });
         return;
       }
 
@@ -394,6 +400,12 @@ function bindClicks(root: HTMLElement, signal: AbortSignal): void {
 
       if (target.closest("#menu-close")) {
         closeDrawer();
+        return;
+      }
+
+      if (target.closest("#drawer-search")) {
+        closeDrawer();
+        search?.open();
         return;
       }
 
