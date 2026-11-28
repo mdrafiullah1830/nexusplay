@@ -14,22 +14,17 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  color-scheme: light;
 }
 
 body {
-  font-family: $font-body;
+  font-family: var(--font-body);
   font-size: $fs-body;
   color: var(--color-ink);
   background: var(--color-bg);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s $ease, color 0.3s $ease;
-}
-
-html {
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  transition: background-color 0.3s ease;
 }
 
 img {
@@ -67,7 +62,7 @@ h4 {
   display: block;
   margin-top: 2px;
   font-size: $fs-xs;
-  color: $gray-500;
+  color: var(--color-muted);
 }
 
 // -- Page enter animation --------------------------------------------

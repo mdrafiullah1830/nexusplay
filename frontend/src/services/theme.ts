@@ -11,10 +11,10 @@ export function initTheme(): void {
   try {
     saved = window.localStorage.getItem(THEME_STORAGE_KEY);
   } catch {
-    // Storage may be disabled; keep the requested dark-mode default.
+    // Storage may be disabled; fall back to the light theme.
   }
 
-  const theme: NexusPlayTheme = saved === "light" || saved === "dark" ? saved : "dark";
+  const theme: NexusPlayTheme = saved === "light" || saved === "dark" ? saved : "light";
   document.documentElement.setAttribute("data-theme", theme);
   document.documentElement.style.colorScheme = theme;
 }

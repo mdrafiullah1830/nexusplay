@@ -29,7 +29,7 @@ import { initTilt3DDelegated, initMagnetic, initPressRippleDelegated } from "./a
 
 // Theme selection is persisted by the shared theme service.
 // -- Initialize all animation systems ----------------------------------
-async function initAnimationSystems(): Promise<void> {
+function initAnimationSystems(): void {
   const page = document.body.dataset.page;
   
   // 1. View transitions (MPA navigation)
@@ -59,7 +59,9 @@ async function initAnimationSystems(): Promise<void> {
   ]);
   
   // 3. Entrance choreography
-  await runEntranceChoreography(page ?? '');
+  void runEntranceChoreography(page ?? '').catch((error: unknown) => {
+    console.error("Entrance choreography failed", error);
+  });
   
   // 4. 3D tilt on cards/tiles (delegated for dynamic content)
   initTilt3DDelegated(document.body, '.p-card, .tile, .trend-card, .cat-tile', {
@@ -82,15 +84,15 @@ async function initAnimationSystems(): Promise<void> {
   // Homepage presentation uses lightweight CSS motion; avoid loading Three.js on every route.
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initNavbar();
   wishlist.init();
   initFooter();
   bindProductCardNavigation();
   
-  // Initialize animation systems before page content
-  await initAnimationSystems();
+  // Animation setup must not delay page initialization.
+  initAnimationSystems();
   
   const page = document.body.dataset.page;
 
