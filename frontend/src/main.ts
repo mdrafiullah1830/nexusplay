@@ -4,6 +4,7 @@
 import "./styles/main.scss";
 
 import { initNavbar } from "./components/navbar";
+import { wishlist } from "./services/wishlist";
 import { initTheme } from "./services/theme";
 import { initFooter } from "./components/footer";
 import { initHomePage } from "./pages/home";
@@ -11,6 +12,7 @@ import { initShopPage } from "./pages/shop";
 import { initProductPage, initWishlistPage } from "./pages/product";
 import { initCartPage } from "./pages/cart";
 import { initCheckoutPage } from "./pages/checkout";
+import { initOrdersPage } from "./pages/orders";
 import { initTrackPage } from "./pages/track";
 import { initAuthPages } from "./pages/auth";
 import { initAdminPage } from "./pages/admin";
@@ -83,6 +85,7 @@ async function initAnimationSystems(): Promise<void> {
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initNavbar();
+  wishlist.init();
   initFooter();
   bindProductCardNavigation();
   
@@ -109,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       break;
     case "checkout":
       initCheckoutPage();
+      break;
+    case "orders":
+      initOrdersPage();
       break;
     case "track":
       initTrackPage();

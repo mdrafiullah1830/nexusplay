@@ -17,6 +17,8 @@ public interface IProductRepository
 public interface IOrderRepository
 {
     Task<Order> CreateAsync(Order order, CancellationToken ct = default);
+    Task<(Order Order, bool Created)> CreateOrGetAsync(Order order, CancellationToken ct = default);
+    Task<Order?> FindByIdempotencyKeyAsync(string key, CancellationToken ct = default);
     Task<Order?> GetAsync(string id, CancellationToken ct = default);
     Task<Order?> FindAsync(string orderNo, string phone, CancellationToken ct = default);
     Task<Order?> FindByOrderNoAsync(string orderNo, CancellationToken ct = default);

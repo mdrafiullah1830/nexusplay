@@ -175,3 +175,29 @@ html[data-theme="light"] body[data-page="shop"] .shop-hero__aside-foot { color: 
   body[data-page="home"] .hero--arena .hero__eyebrow { margin-bottom: 3.5rem; }
   body[data-page="home"] .hero__command-line { display: none; }
 }
+
+@media (max-width: 420px) {
+  .navbar__inner { gap: .25rem; }
+  .navbar__logo { font-size: 1.05rem; }
+  .navbar__actions { gap: .25rem; }
+  .navbar__wishlist { display: none; }
+  .navbar .navbar__cart-count,
+  .navbar .navbar__wishlist-count { right: 0; }
+  body[data-page="home"] .navbar__theme-btn,
+  body[data-page="shop"] .navbar__theme-btn { padding: .25rem; }
+  body[data-page="home"] .navbar__actions > .navbar__theme-btn,
+  body[data-page="shop"] .navbar__actions > .navbar__theme-btn { display: none; }
+}
+
+@media (max-width: 340px) {
+  .navbar__inner { gap: .15rem; }
+  .navbar__logo { font-size: .95rem; }
+  .navbar__actions { gap: .15rem; }
+  .navbar__actions > #search-btn { display: none; }
+}
+
+.mobile-menu__theme {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}

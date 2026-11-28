@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="NexusPlay.Api.Tests/NexusPlay.Api.Tests.csproj" />
   <Project Path="NexusPlay.Api/NexusPlay.Api.csproj" />
   <Project Path="NexusPlay.Core/NexusPlay.Core.csproj" />
   <Project Path="NexusPlay.Data/NexusPlay.Data.csproj" />

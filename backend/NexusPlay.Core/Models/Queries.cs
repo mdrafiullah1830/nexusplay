@@ -19,6 +19,7 @@ public class ProductQuery
 
 public class OrderQuery
 {
+    public string? UserId { get; set; }
     public string? Status { get; set; }
     public string? Q { get; set; }
     public int Page { get; set; } = 1;

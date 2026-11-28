@@ -3,7 +3,9 @@ using System.Security.Cryptography;
 using System.Text;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
 using NexusPlay.Core.Interfaces;
@@ -18,15 +20,22 @@ public class AuthController : ControllerBase
     private readonly IUserRepository _users;
     private readonly TokenService _tokens;
     private readonly GoogleAuthService _google;
+    private readonly IWebHostEnvironment _environment;
 
-    public AuthController(IUserRepository users, TokenService tokens, GoogleAuthService google)
+    public AuthController(
+        IUserRepository users,
+        TokenService tokens,
+        GoogleAuthService google,
+        IWebHostEnvironment environment)
     {
         _users = users;
         _tokens = tokens;
         _google = google;
+        _environment = environment;
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Name) || string.IsNullOrWhiteSpace(req.Email) ||
@@ -54,6 +63,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest req, CancellationToken ct)
     {
         var user = await _users.GetByEmailAsync(req.Email ?? "", ct);
@@ -75,7 +85,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("nexusplay_google_csrf", csrfToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = Request.IsHttps,
+            Secure = Request.IsHttps || !_environment.IsDevelopment(),
             SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddMinutes(10),
             Path = "/api/auth/google",
@@ -85,6 +95,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("google")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponse>> GoogleLogin(
         GoogleLoginRequest req,
         CancellationToken ct)

@@ -5,6 +5,10 @@ import { api, ApiError } from "../services/api";
 import { formatBDT } from "../services/cart";
 import type { Order } from "../types";
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch] ?? ch));
+}
+
 const STEPS = [
   { key: "pending", label: "Order Placed" },
   { key: "awaiting-verification", label: "Payment Check" },
@@ -29,8 +33,8 @@ function timelineHtml(order: Order): string {
         .map(
           (t) => `
         <div class="timeline__event">
-          <strong>${STATUS_LABEL[t.status] ?? t.status}</strong>
-          ${t.note ? `<span>${t.note}</span>` : ""}
+          <strong>${escapeHtml(STATUS_LABEL[t.status] ?? t.status)}</strong>
+          ${t.note ? `<span>${escapeHtml(t.note ?? "")}</span>` : ""}
           <time>${new Date(t.at).toLocaleString()}</time>
         </div>`,
         )
@@ -58,8 +62,8 @@ function timelineHtml(order: Order): string {
         .map(
           (t) => `
         <div class="timeline__event">
-          <strong>${STATUS_LABEL[t.status] ?? t.status}</strong>
-          ${t.note ? `<span>${t.note}</span>` : ""}
+          <strong>${escapeHtml(STATUS_LABEL[t.status] ?? t.status)}</strong>
+          ${t.note ? `<span>${escapeHtml(t.note ?? "")}</span>` : ""}
           <time>${new Date(t.at).toLocaleString()}</time>
         </div>`,
         )
@@ -72,7 +76,7 @@ function orderCard(order: Order): string {
     <div class="track-result">
       <div class="track-result__head">
         <div>
-          <div class="track-result__no">${order.orderNo}</div>
+          <div class="track-result__no">${escapeHtml(order.orderNo)}</div>
           <div class="track-result__date">${new Date(order.createdAt).toLocaleString()}</div>
         </div>
         <span class="stock-badge ${
@@ -81,7 +85,7 @@ function orderCard(order: Order): string {
             : order.status === "cancelled"
               ? "stock-badge--out"
               : "stock-badge--pre"
-        }">${STATUS_LABEL[order.status] ?? order.status}</span>
+        }">${escapeHtml(STATUS_LABEL[order.status] ?? order.status)}</span>
       </div>
 
       ${timelineHtml(order)}
@@ -91,7 +95,7 @@ function orderCard(order: Order): string {
           .map(
             (i) => `
           <div class="mini-line">
-            <span>${i.name}${i.colour ? ` (${i.colour})` : ""} × ${i.qty}</span>
+            <span>${escapeHtml(i.name)}${i.colour ? ` (${escapeHtml(i.colour ?? "")})` : ""} × ${i.qty}</span>
             <span>${formatBDT(i.price * i.qty)}</span>
           </div>`,
           )
@@ -105,14 +109,14 @@ function orderCard(order: Order): string {
       </div>
 
       <div class="track-result__meta">
-        <div><strong>Name:</strong> ${order.customer.name}</div>
-        <div><strong>Phone:</strong> ${order.customer.phone}</div>
-        <div><strong>Address:</strong> ${order.customer.address}${
-          order.customer.city ? `, ${order.customer.city}` : ""
+        <div><strong>Name:</strong> ${escapeHtml(order.customer.name)}</div>
+        <div><strong>Phone:</strong> ${escapeHtml(order.customer.phone)}</div>
+        <div><strong>Address:</strong> ${escapeHtml(order.customer.address)}${
+          order.customer.city ? `, ${escapeHtml(order.customer.city ?? "")}` : ""
         }</div>
         <div><strong>Payment:</strong> ${
           order.paymentMethod === "bkash"
-            ? `bKash${order.bkashTrxId ? ` · Trx ${order.bkashTrxId}` : ""}`
+            ? `bKash${order.bkashTrxId ? ` · Trx ${escapeHtml(order.bkashTrxId ?? "")}` : ""}`
             : "Cash on Delivery"
         }</div>
       </div>
@@ -121,112 +125,46 @@ function orderCard(order: Order): string {
 
 export function initTrackPage(): void {
   const form = document.getElementById("track-form") as HTMLFormElement | null;
-  const result = document.getElementById("track-result")!;
+  const result = document.getElementById("track-result");
   if (!form || !result) return;
-
   const orderNoInput = form.querySelector<HTMLInputElement>("#track-no")!;
   const phoneInput = form.querySelector<HTMLInputElement>("#track-phone")!;
-
-  // Prefill from ?orderNo=
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("orderNo")) orderNoInput.value = params.get("orderNo")!;
-
-  // Current order being tracked
-  let currentOrder: Order | null = null;
-  let eventSource: EventSource | null = null;
-  let pollTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function render(order: Order): void {
-    result.innerHTML = orderCard(order);
-    currentOrder = order;
+  orderNoInput.value = new URLSearchParams(window.location.search).get("orderNo") ?? "";
+  let generation = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  function stop(): void {
+    generation++;
+    if (timer !== undefined) clearTimeout(timer);
   }
-
-  function mapStatusClass(status: string): string {
-    switch (status) {
-      case "delivered": return "in";
-      case "cancelled": return "out";
-      case "awaiting-verification": return "pre";
-      default: return "pre";
+  window.addEventListener("pagehide", stop);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    stop();
+    const request = generation;
+    const phone = phoneInput.value.replace(/\s|-/g, "");
+    const orderNo = orderNoInput.value.trim();
+    if (!orderNo || !/^01[3-9]\d{8}$/.test(phone)) {
+      result.textContent = "Enter your order number and full Bangladeshi phone number.";
+      return;
     }
-  }
-
-  function startPolling(): void {
-    if (pollTimer) clearTimeout(pollTimer);
-    pollTimer = setInterval(async () => {
+    const path = "/orders/track?orderNo=" + encodeURIComponent(orderNo) + "&phone=" + encodeURIComponent(phone);
+    result.textContent = "Searching for your order…";
+    async function refresh(initial: boolean): Promise<void> {
+      if (request !== generation || !result) return;
       try {
-        const order = await api.get<Order>(
-          `/orders/track?orderNo=${encodeURIComponent(orderNoInput.value.trim())}&phone=${encodeURIComponent(phoneInput.value.trim())}`,
-        );
-        render(order);
-      } catch { /* silently retry */ }
-    }, 5000);
-  }
-
-  function initSSE(orderNo: string): void {
-    if (eventSource) { eventSource.close(); eventSource = null; }
-    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
-
-    eventSource = new EventSource(`/api/orders/track/stream/${encodeURIComponent(orderNo)}`);
-
-    eventSource.onopen = () => { result.querySelector(".shop-loading")?.remove(); };
-
-    eventSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (currentOrder) {
-          const statusEl = result.querySelector(".stock-badge") as HTMLElement | null;
-          if (statusEl && STATUS_LABEL[data.status]) {
-            
-            statusEl.className = `stock-badge stock-badge--${mapStatusClass(data.status)} animate-status`;
-            statusEl.style.transition = "all 0.3s ease";
-            void statusEl.offsetWidth;
-          }
+        const order = await api.get<Order>(path);
+        if (request !== generation) return;
+        result.innerHTML = orderCard(order);
+        if (order.status === "delivered" || order.status === "cancelled") return;
+      } catch (err) {
+        if (request !== generation) return;
+        if (initial || (err instanceof ApiError && [400, 401, 403, 404].includes(err.status))) {
+          result.textContent = err instanceof ApiError ? err.message : "Unable to load your order. Please retry.";
+          return;
         }
-      } catch {
-        if (eventSource) { eventSource.close(); eventSource = null; }
-        startPolling();
       }
-    };
-
-    eventSource.addEventListener("order-status", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (currentOrder && STATUS_LABEL[data.status]) {
-          const statusEl = result.querySelector(".stock-badge") as HTMLElement | null;
-          if (statusEl) {
-            statusEl.textContent = STATUS_LABEL[data.status];
-            statusEl.className = `stock-badge stock-badge--${mapStatusClass(data.status)} animate-status`;
-            statusEl.style.transition = "all 0.3s ease";
-            void statusEl.offsetWidth;
-          }
-        }
-      } catch {}
-    });
-
-    eventSource.onerror = () => {
-      if (eventSource) { eventSource.close(); eventSource = null; }
-      startPolling();
-    };
-  }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    result.innerHTML = `<div class="shop-loading">Searching for your order…</div>`;
-
-    try {
-      const order = await api.get<Order>(
-        `/orders/track?orderNo=${encodeURIComponent(orderNoInput.value.trim())}&phone=${encodeURIComponent(phoneInput.value.trim())}`,
-      );
-      render(order);
-      initSSE(order.orderNo);
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "Could not reach the server.";
-      result.innerHTML = `
-        <div class="track-empty">
-          <span style="font-size:2.5rem">📦</span>
-          <h3>${msg}</h3>
-          <p>Check your order number (starts with <strong>NP</strong>) and the phone number you ordered with.</p>
-        </div>`;
+      if (request === generation) timer = setTimeout(() => void refresh(false), 10000);
     }
+    await refresh(true);
   });
 }

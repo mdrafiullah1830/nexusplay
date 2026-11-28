@@ -27,6 +27,17 @@ public class AdminController : ControllerBase
         "pending", "awaiting-verification", "confirmed", "shipped", "delivered", "cancelled",
     };
 
+    private static readonly IReadOnlyDictionary<string, HashSet<string>> AllowedTransitions =
+        new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
+        {
+            ["pending"] = new(StringComparer.Ordinal) { "confirmed", "cancelled" },
+            ["awaiting-verification"] = new(StringComparer.Ordinal) { "confirmed", "cancelled" },
+            ["confirmed"] = new(StringComparer.Ordinal) { "shipped" },
+            ["shipped"] = new(StringComparer.Ordinal) { "delivered" },
+            ["delivered"] = new(StringComparer.Ordinal),
+            ["cancelled"] = new(StringComparer.Ordinal),
+        };
+
     public AdminController(IProductRepository products, IOrderRepository orders,
         IWebHostEnvironment env, OrderEventService events, IConfiguration config,
         IHttpClientFactory httpClients)
@@ -166,6 +177,18 @@ public class AdminController : ControllerBase
 
         var order = await _orders.GetAsync(id, ct);
         if (order is null) return NotFound(new { message = "Order not found" });
+
+        if (!AllowedTransitions.TryGetValue(order.Status, out var allowed) || !allowed.Contains(req.Status))
+            return Conflict(new { message = $"Cannot change order status from '{order.Status}' to '{req.Status}'" });
+
+        if (order.Status == "awaiting-verification" &&
+            req.Status == "confirmed" &&
+            order.PaymentMethod == "bkash")
+        {
+            if (string.IsNullOrWhiteSpace(order.BkashTrxId))
+                return Conflict(new { message = "Cannot verify bKash payment without a transaction ID" });
+            order.PaymentStatus = "paid";
+        }
 
         order.Status = req.Status;
         order.Tracking.Add(new TrackingEvent

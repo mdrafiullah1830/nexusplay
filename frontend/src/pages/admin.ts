@@ -6,6 +6,7 @@ import { auth } from "../services/auth";
 import { formatBDT } from "../services/cart";
 import { toast } from "../services/toast";
 import type { AdminStats, Order, PagedResult, Product } from "../types";
+import { escapeHtml } from "../utils/html";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -55,7 +56,7 @@ export function initAdminPage(): void {
     <div class="container admin">
       <div class="admin__head">
         <h1 class="page-title">Admin Dashboard</h1>
-        <span class="admin__hello">Logged in as ${auth.user()?.email}</span>
+        <span class="admin__hello">Logged in as ${escapeHtml(auth.user()?.email ?? "")}</span>
       </div>
 
       <div class="admin__stats" id="admin-stats"></div>
@@ -205,7 +206,7 @@ export function initAdminPage(): void {
     } catch (err) {
       content.innerHTML = `
         <div class="track-empty">
-          <h3>${err instanceof ApiError ? err.message : "Failed to load data"}</h3>
+          <h3>${escapeHtml(err instanceof ApiError ? err.message : "Failed to load data")}</h3>
           <p>Is the backend running on port 5000?</p>
         </div>`;
     }
@@ -224,10 +225,10 @@ export function initAdminPage(): void {
                 (p) => `
               <tr>
                 <td>
-                  <div class="admin-table__name">${p.name}</div>
-                  <div class="admin-table__sub">${p.compatibility?.join(", ") ?? ""}</div>
+                  <div class="admin-table__name">${escapeHtml(p.name)}</div>
+                  <div class="admin-table__sub">${escapeHtml(p.compatibility?.join(", ") ?? "")}</div>
                 </td>
-                <td>${p.brand}</td>
+                <td>${escapeHtml(p.brand)}</td>
                 <td>
                   ${formatBDT(p.price)}
                   ${p.oldPrice > p.price ? `<s>${formatBDT(p.oldPrice)}</s>` : ""}
@@ -238,10 +239,10 @@ export function initAdminPage(): void {
                     : p.stock === "pre-order"
                       ? "stock-badge--pre"
                       : "stock-badge--out"
-                }">${p.stock}</span></td>
+                }">${escapeHtml(p.stock)}</span></td>
                 <td class="admin-table__actions">
-                  <button class="btn-mini" data-edit="${p.id}">Edit</button>
-                  <button class="btn-mini btn-mini--danger" data-del="${p.id}">Delete</button>
+                  <button class="btn-mini" data-edit="${escapeHtml(p.id)}">Edit</button>
+                  <button class="btn-mini btn-mini--danger" data-del="${escapeHtml(p.id)}">Delete</button>
                 </td>
               </tr>`,
               )
@@ -290,22 +291,22 @@ export function initAdminPage(): void {
                 (o) => `
               <tr>
                 <td>
-                  <div class="admin-table__name">${o.orderNo}</div>
+                  <div class="admin-table__name">${escapeHtml(o.orderNo)}</div>
                   <div class="admin-table__sub">${new Date(o.createdAt).toLocaleString()}</div>
                 </td>
                 <td>
-                  <div>${o.customer.name}</div>
-                  <div class="admin-table__sub">${o.customer.phone}</div>
-                  <div class="admin-table__sub">${o.customer.address}</div>
+                  <div>${escapeHtml(o.customer.name)}</div>
+                  <div class="admin-table__sub">${escapeHtml(o.customer.phone)}</div>
+                  <div class="admin-table__sub">${escapeHtml(o.customer.address)}</div>
                 </td>
                 <td>${o.items.reduce((n, i) => n + i.qty, 0)}</td>
                 <td>${formatBDT(o.total)}</td>
                 <td>
                   ${o.paymentMethod === "bkash" ? "bKash" : "COD"}
-                  ${o.bkashTrxId ? `<div class="admin-table__sub">Trx: ${o.bkashTrxId}</div>` : ""}
+                  ${o.bkashTrxId ? `<div class="admin-table__sub">Trx: ${escapeHtml(o.bkashTrxId)}</div>` : ""}
                 </td>
                 <td>
-                  <select class="filter-select" data-order-status="${o.id}">
+                  <select class="filter-select" data-order-status="${escapeHtml(o.id)}">
                     ${STATUS_OPTIONS.map(
                       (s) =>
                         `<option value="${s.value}" ${o.status === s.value ? "selected" : ""}>${s.label}</option>`,
@@ -313,7 +314,7 @@ export function initAdminPage(): void {
                   </select>
                   ${
                     o.status === "awaiting-verification"
-                      ? `<button class="btn-mini" data-verify="${o.id}">✓ Verify bKash</button>`
+                      ? `<button class="btn-mini" data-verify="${escapeHtml(o.id)}">✓ Verify bKash</button>`
                       : ""
                   }
                 </td>

@@ -31,6 +31,8 @@ public class MongoContext
             new CreateIndexModel<Order>(orderKeys,
                 new CreateIndexOptions { Unique = true, Name = "ix_orderno" }),
             new CreateIndexModel<Order>(Builders<Order>.IndexKeys.Descending(o => o.CreatedAt)),
+            new CreateIndexModel<Order>(Builders<Order>.IndexKeys.Ascending(o => o.IdempotencyKey),
+                new CreateIndexOptions { Unique = true, Sparse = true, Name = "ux_order_idempotency_key" }),
         }, ct);
 
         await Users.Indexes.CreateOneAsync(

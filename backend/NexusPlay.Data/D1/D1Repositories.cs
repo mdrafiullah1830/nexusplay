@@ -86,17 +86,46 @@ public sealed class D1OrderRepository(D1Client db) : IOrderRepository
 {
     public async Task<Order> CreateAsync(Order order, CancellationToken ct = default)
     {
-        await db.QueryAsync("INSERT INTO orders (id,json,order_no,phone,customer_name,status,total,created_at) VALUES (?,?,?,?,?,?,?,?)",
+        await db.QueryAsync("INSERT INTO orders (id,json,order_no,phone,customer_name,status,total,created_at,idempotency_key,request_fingerprint) VALUES (?,?,?,?,?,?,?,?,?,?)",
             [order.Id, D1Client.Encode(order), order.OrderNo, order.Customer.Phone, order.Customer.Name,
-                order.Status, order.Total, order.CreatedAt.ToString("O")], ct);
+                order.Status, order.Total, order.CreatedAt.ToString("O"), order.IdempotencyKey,
+                order.RequestFingerprint], ct);
         return order;
     }
+
+    public async Task<(Order Order, bool Created)> CreateOrGetAsync(Order order, CancellationToken ct = default)
+    {
+        try
+        {
+            await CreateAsync(order, ct);
+            return (order, true);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
+        {
+            var existing = await FindByIdempotencyKeyAsync(order.IdempotencyKey!, ct);
+            if (existing is not null) return (existing, false);
+            throw;
+        }
+    }
+
+    public async Task<Order?> FindByIdempotencyKeyAsync(string key, CancellationToken ct = default)
+    {
+        var row = (await db.QueryAsync(
+            "SELECT json,idempotency_key,request_fingerprint FROM orders WHERE idempotency_key=?",
+            [key], ct)).FirstOrDefault();
+        if (row.ValueKind == JsonValueKind.Undefined) return null;
+        var order = D1Client.Decode<Order>(row);
+        order.IdempotencyKey = row.GetProperty("idempotency_key").GetString();
+        order.RequestFingerprint = row.GetProperty("request_fingerprint").GetString();
+        return order;
+    }
+
     public async Task<Order?> GetAsync(string id, CancellationToken ct = default) =>
         DecodeFirst(await db.QueryAsync("SELECT json FROM orders WHERE id=?", [id], ct));
     public async Task<Order?> FindAsync(string orderNo, string phone, CancellationToken ct = default)
     {
         var order = await FindByOrderNoAsync(orderNo, ct);
-        return order is not null && order.Customer.Phone.EndsWith(phone.Trim(), StringComparison.Ordinal)
+        return order is not null && string.Equals(order.Customer.Phone, phone.Trim(), StringComparison.Ordinal)
             ? order : null;
     }
     public async Task<Order?> FindByOrderNoAsync(string orderNo, CancellationToken ct = default) =>
@@ -104,6 +133,7 @@ public sealed class D1OrderRepository(D1Client db) : IOrderRepository
     public async Task<PagedResult<Order>> SearchAsync(OrderQuery q, CancellationToken ct = default)
     {
         var where = new List<string>(); var args = new List<object?>();
+        if (!string.IsNullOrWhiteSpace(q.UserId)) { where.Add("json_extract(json, '$.userId')=?"); args.Add(q.UserId); }
         if (!string.IsNullOrWhiteSpace(q.Status)) { where.Add("status=?"); args.Add(q.Status); }
         if (!string.IsNullOrWhiteSpace(q.Q))
         {

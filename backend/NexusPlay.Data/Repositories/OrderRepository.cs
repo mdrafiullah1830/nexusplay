@@ -20,6 +20,24 @@ public class OrderRepository : IOrderRepository
         return order;
     }
 
+    public async Task<(Order Order, bool Created)> CreateOrGetAsync(Order order, CancellationToken ct = default)
+    {
+        try
+        {
+            await CreateAsync(order, ct);
+            return (order, true);
+        }
+        catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        {
+            var existing = await FindByIdempotencyKeyAsync(order.IdempotencyKey!, ct);
+            if (existing is not null) return (existing, false);
+            throw;
+        }
+    }
+
+    public async Task<Order?> FindByIdempotencyKeyAsync(string key, CancellationToken ct = default) =>
+        await _orders.Find(o => o.IdempotencyKey == key).FirstOrDefaultAsync(ct);
+
     public async Task<Order?> GetAsync(string id, CancellationToken ct = default) =>
         await _orders.Find(o => o.Id == id).FirstOrDefaultAsync(ct);
 
@@ -30,7 +48,7 @@ public class OrderRepository : IOrderRepository
 
         return await _orders.Find(o =>
                 o.OrderNo == no &&
-                (o.Customer.Phone == ph || o.Customer.Phone.EndsWith(ph)))
+                o.Customer.Phone == ph)
             .FirstOrDefaultAsync(ct);
     }
 
@@ -43,6 +61,8 @@ public class OrderRepository : IOrderRepository
     public async Task<PagedResult<Order>> SearchAsync(OrderQuery q, CancellationToken ct = default)
     {
         var filter = Builders<Order>.Filter.Empty;
+        if (!string.IsNullOrWhiteSpace(q.UserId))
+            filter &= Builders<Order>.Filter.Eq(o => o.UserId, q.UserId);
 
         if (!string.IsNullOrWhiteSpace(q.Status))
             filter &= Builders<Order>.Filter.Eq(o => o.Status, q.Status);

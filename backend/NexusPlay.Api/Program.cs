@@ -212,9 +212,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseAuditLogging();
 app.UseCors("frontend");
 app.UseAuthentication();
+app.UseAuditLogging();
 app.UseAuthorization();
 
 // -- Rate Limiting -------------------------------------------------

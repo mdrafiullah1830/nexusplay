@@ -1,7 +1,12 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using NexusPlay.Api.Dtos;
 using NexusPlay.Api.Services;
@@ -37,15 +42,27 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("OrderPolicy")]
     public async Task<ActionResult<Order>> Place(PlaceOrderRequest req, CancellationToken ct)
     {
+        var idempotencyKey = Request.Headers["Idempotency-Key"].ToString();
+        if (idempotencyKey.Length > 0 &&
+            !Regex.IsMatch(
+                idempotencyKey,
+                @"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
+            return BadRequest(new { message = "Idempotency-Key must be a UUIDv4" });
+
         if (req.Customer is null || string.IsNullOrWhiteSpace(req.Customer.Name) ||
             string.IsNullOrWhiteSpace(req.Customer.Phone) ||
             string.IsNullOrWhiteSpace(req.Customer.Address))
             return BadRequest(new { message = "Customer name, phone and address are required" });
 
-        if (req.Items is null || req.Items.Count == 0)
-            return BadRequest(new { message = "Cart is empty" });
+        if (req.Items is null || req.Items.Count == 0 || req.Items.Count > 50)
+            return BadRequest(new { message = "Cart must contain between 1 and 50 lines" });
+
+        var phone = System.Text.RegularExpressions.Regex.Replace(req.Customer.Phone, @"[\s-]", "");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^01[3-9][0-9]{8}$"))
+            return BadRequest(new { message = "Invalid Bangladeshi phone number" });
 
         var method = req.PaymentMethod?.ToLowerInvariant();
         if (method is not ("cod" or "bkash"))
@@ -55,15 +72,24 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "bKash transaction ID is required" });
 
         var items = new List<OrderItem>();
+        var seen = new HashSet<(string, string?)>();
         foreach (var line in req.Items)
         {
-            var qty = Math.Clamp(line.Qty, 1, 50);
+            if (line is null || string.IsNullOrWhiteSpace(line.ProductId) || line.Qty < 1 || line.Qty > 50)
+                return BadRequest(new { message = "Invalid cart line or quantity" });
+            var qty = line.Qty;
+            var colour = string.IsNullOrWhiteSpace(line.Colour) ? null : line.Colour.Trim();
+            if (!seen.Add((line.ProductId, colour)))
+                return BadRequest(new { message = "Duplicate cart line" });
             var product = await _products.GetAsync(line.ProductId, ct);
             if (product is null)
                 return BadRequest(new { message = $"Product not found: {line.ProductId}" });
 
             if (product.Stock == "out-of-stock")
                 return BadRequest(new { message = $"'{product.Name}' is out of stock" });
+
+            if (product.Price <= 0 || (product.Colours?.Count > 0 && (colour is null || !product.Colours.Contains(colour))) || (colour is not null && !(product.Colours?.Contains(colour) ?? false)))
+                return BadRequest(new { message = "Invalid product price or colour selection" });
 
             items.Add(new OrderItem
             {
@@ -73,23 +99,27 @@ public class OrdersController : ControllerBase
                 Category = product.Category,
                 Price = product.Price,
                 Qty = qty,
-                Colour = line.Colour,
+                Colour = colour,
             });
         }
 
         var subtotal = items.Sum(i => i.Price * i.Qty);
         var deliveryFee = subtotal >= FreeDeliveryThreshold ? 0 : StandardDeliveryFee;
 
+        if (req.ExpectedTotal is decimal expected && expected != subtotal + deliveryFee)
+            return Conflict(new { message = "Prices changed. Review your cart before placing the order." });
+
+        var userId = User.Identity?.IsAuthenticated == true
+            ? (User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))
+            : null;
         var order = new Order
         {
             OrderNo = GenerateOrderNo(),
-            UserId = User.Identity?.IsAuthenticated == true
-                ? User.FindFirstValue("sub")
-                : null,
+            UserId = userId,
             Customer = new CustomerInfo
             {
                 Name = req.Customer.Name.Trim(),
-                Phone = req.Customer.Phone.Trim(),
+                Phone = phone,
                 Email = req.Customer.Email?.Trim(),
                 Address = req.Customer.Address.Trim(),
                 City = req.Customer.City?.Trim(),
@@ -105,6 +135,14 @@ public class OrdersController : ControllerBase
             Status = method == "bkash" ? "awaiting-verification" : "pending",
         };
 
+        string? fingerprint = null;
+        if (idempotencyKey.Length > 0)
+        {
+            fingerprint = Fingerprint(order);
+            order.IdempotencyKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(idempotencyKey)));
+            order.RequestFingerprint = fingerprint;
+        }
+
         order.Tracking.Add(new TrackingEvent
         {
             Status = order.Status,
@@ -114,18 +152,30 @@ public class OrdersController : ControllerBase
             At = DateTime.UtcNow,
         });
 
-        await _orders.CreateAsync(order, ct);
-
-        // Send confirmation email & SMS
-        try
+        var created = true;
+        if (order.IdempotencyKey is null)
         {
-            await SendOrderConfirmation(order);
+            await _orders.CreateAsync(order, ct);
         }
-        catch (Exception ex)
+        else
         {
-            // The order is already stored; a notification failure must not
-            // make the customer retry and create a second order.
-            _logger.LogWarning(ex, "Order confirmation failed for {OrderNo}", order.OrderNo);
+            var result = await _orders.CreateOrGetAsync(order, ct);
+            order = result.Order;
+            created = result.Created;
+            if (!string.Equals(order.RequestFingerprint, fingerprint, StringComparison.Ordinal))
+                return Conflict(new { message = "This idempotency key was already used for a different order." });
+        }
+
+        if (created)
+        {
+            try
+            {
+                await SendOrderConfirmation(order);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Order confirmation failed for {OrderNo}", order.OrderNo);
+            }
         }
 
         return CreatedAtAction(nameof(Track), new { orderNo = order.OrderNo }, order);
@@ -177,45 +227,17 @@ public class OrdersController : ControllerBase
     public async Task<ActionResult<Order>> Track([FromQuery] string orderNo,
         [FromQuery] string phone, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(phone))
+        if (string.IsNullOrWhiteSpace(orderNo) || string.IsNullOrWhiteSpace(phone) || !System.Text.RegularExpressions.Regex.IsMatch(phone.Trim(), @"^01[3-9][0-9]{8}$"))
             return BadRequest(new { message = "orderNo and phone are required" });
 
+        Response.Headers["Cache-Control"] = "no-store";
         var order = await _orders.FindAsync(orderNo, phone, ct);
         return order is null
             ? NotFound(new { message = "No order found for that order number and phone number" })
             : Ok(order);
     }
 
-    [HttpGet("track/stream/{orderNo}")]
-    [AllowAnonymous]
-    public async Task Stream(string orderNo, CancellationToken ct)
-    {
-        var order = await _orders.FindByOrderNoAsync(orderNo, ct);
-        if (order is null)
-        {
-            HttpContext.Response.StatusCode = 404;
-            await HttpContext.Response.WriteAsync("Order not found", ct);
-            return;
-        }
-
-        HttpContext.Response.StatusCode = 200;
-        HttpContext.Response.Headers["Content-Type"] = "text/event-stream";
-        HttpContext.Response.Headers["Cache-Control"] = "no-cache";
-        HttpContext.Response.Headers["Connection"] = "keep-alive";
-        HttpContext.Response.Headers["X-Accel-Buffering"] = "no";
-
-        var initial = "event: order-status" + "\n" +
-                      "data: {\"status\":\"" + order.Status +
-                      "\",\"note\":\"Stream connected\",\"at\":\"" + DateTime.UtcNow.ToString("o") + "\"}" + "\n\n";
-        await HttpContext.Response.WriteAsync(initial, ct);
-        await HttpContext.Response.Body.FlushAsync(ct);
-
-        await foreach (var evt in _events.SubscribeAsync(orderNo, ct))
-        {
-            await HttpContext.Response.WriteAsync(evt, ct);
-            await HttpContext.Response.Body.FlushAsync(ct);
-        }
-    }
+    // Tracking uses the verified order-and-phone endpoint instead of a public SSE stream.
 
     [Authorize]
     [HttpGet("my")]
@@ -225,22 +247,29 @@ public class OrdersController : ControllerBase
         var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var all = await _orders.SearchAsync(new OrderQuery { Page = 1, PageSize = 100 }, ct);
-        var mine = all.Items.Where(o => o.UserId == userId).ToList();
-
-        return Ok(new PagedResult<Order>
-        {
-            Items = mine,
-            Total = mine.Count,
-            Page = page,
-            PageSize = 100,
-        });
+        return Ok(await _orders.SearchAsync(new OrderQuery { UserId = userId, Page = page, PageSize = 20 }, ct));
     }
 
     private static string GenerateOrderNo()
     {
         var stamp = DateTime.UtcNow.ToString("yyMMdd");
-        var suffix = Random.Shared.Next(1000, 10000);
+        var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(5));
         return $"NP{stamp}{suffix}";
+    }
+
+    private static string Fingerprint(Order order)
+    {
+        var canonical = JsonSerializer.Serialize(new
+        {
+            order.UserId,
+            order.Customer,
+            order.Items,
+            order.PaymentMethod,
+            order.BkashTrxId,
+            order.Subtotal,
+            order.DeliveryFee,
+            order.Total,
+        }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 }

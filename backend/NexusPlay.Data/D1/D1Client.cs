@@ -24,7 +24,7 @@ public sealed class D1Client
         using var data = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: ct)
             ?? throw new InvalidOperationException("Empty D1 response");
         var root = data.RootElement;
-        if (!root.GetProperty("success").GetBoolean())
+        if (!root.TryGetProperty("success", out var success) || !success.GetBoolean())
             throw new InvalidOperationException("D1 query failed");
         return root.GetProperty("results").EnumerateArray().Select(x => x.Clone()).ToList();
     }
@@ -61,6 +61,24 @@ public sealed class D1Client
             await QueryAsync(
                 "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
                 [version, DateTime.UtcNow.ToString("O")], ct);
+        }
+
+        if (!applied.Contains(2))
+        {
+            var columns = await QueryAsync("PRAGMA table_info(orders)", ct: ct);
+            var columnNames = columns
+                .Select(row => row.GetProperty("name").GetString())
+                .ToHashSet(StringComparer.Ordinal);
+            if (!columnNames.Contains("idempotency_key"))
+                await QueryAsync("ALTER TABLE orders ADD COLUMN idempotency_key TEXT", ct: ct);
+            if (!columnNames.Contains("request_fingerprint"))
+                await QueryAsync("ALTER TABLE orders ADD COLUMN request_fingerprint TEXT", ct: ct);
+            await QueryAsync(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_orders_idempotency_key ON orders(idempotency_key)",
+                ct: ct);
+            await QueryAsync(
+                "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+                [2, DateTime.UtcNow.ToString("O")], ct);
         }
     }
 

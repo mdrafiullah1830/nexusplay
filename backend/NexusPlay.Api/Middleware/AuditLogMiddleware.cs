@@ -1,4 +1,4 @@
-using System.Text;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 
 namespace NexusPlay.Api.Middleware;
@@ -21,18 +21,12 @@ public class AuditLogMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var startTime = DateTime.UtcNow;
+        var startTime = Stopwatch.GetTimestamp();
         var method = context.Request.Method;
         var path = context.Request.Path;
-        var queryString = context.Request.QueryString.ToUriComponent();
         var user = context.User.Identity?.IsAuthenticated == true
             ? context.User.Identity.Name ?? "anonymous"
             : "anonymous";
-
-        // Buffer response to capture status code
-        var originalBody = context.Response.Body;
-        using var responseBody = new MemoryStream();
-        context.Response.Body = responseBody;
 
         try
         {
@@ -40,23 +34,19 @@ public class AuditLogMiddleware
         }
         finally
         {
-            context.Response.Body.Seek(0, SeekOrigin.Begin);
-            await context.Response.Body.CopyToAsync(originalBody);
-            context.Response.Body.Position = 0;
-
-            var elapsedMs = DateTime.UtcNow.Subtract(startTime).TotalMilliseconds;
+            var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
             var status = context.Response.StatusCode;
 
             // Only log warnings/errors or slow requests (>500ms)
             if (status >= 400 || elapsedMs > 500)
             {
-                _logger.LogWarning("AUDIT | {Method} {Path}{Query} | User: {User} | Status: {Status} | Duration: {Duration:F0}ms",
-                    method, path, queryString, user, status, elapsedMs);
+                _logger.LogWarning("AUDIT | {Method} {Path} | User: {User} | Status: {Status} | Duration: {Duration:F0}ms",
+                    method, path, user, status, elapsedMs);
             }
             else if (status >= 300)
             {
-                _logger.LogInformation("AUDIT | {Method} {Path}{Query} | User: {User} | Status: {Status} | Duration: {Duration:F0}ms",
-                    method, path, queryString, user, status, elapsedMs);
+                _logger.LogInformation("AUDIT | {Method} {Path} | User: {User} | Status: {Status} | Duration: {Duration:F0}ms",
+                    method, path, user, status, elapsedMs);
             }
         }
     }
