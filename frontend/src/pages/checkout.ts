@@ -8,6 +8,7 @@ import { toast } from "../services/toast";
 import type { Order } from "../types";
 
 const BKASH_NUMBER = "01782577251";
+const IDEMPOTENCY_STORAGE_KEY = "nexusplay_checkout_idempotency";
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch] ?? ch));
@@ -15,6 +16,34 @@ function escapeHtml(value: string): string {
 
 function validatePhone(phone: string): boolean {
   return /^01[3-9]\d{8}$/.test(phone.replace(/\s|-/g, ""));
+}
+
+async function getIdempotencyKey(payload: unknown): Promise<string> {
+  const serialized = JSON.stringify(payload);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(serialized));
+  const fingerprint = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const saved = sessionStorage.getItem(IDEMPOTENCY_STORAGE_KEY);
+  if (saved) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(saved);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      sessionStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
+      parsed = null;
+    }
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "fingerprint" in parsed &&
+      parsed.fingerprint === fingerprint &&
+      "key" in parsed &&
+      typeof parsed.key === "string"
+    ) return parsed.key;
+  }
+  const key = crypto.randomUUID();
+  sessionStorage.setItem(IDEMPOTENCY_STORAGE_KEY, JSON.stringify({ fingerprint, key }));
+  return key;
 }
 
 export function initCheckoutPage(): void {
@@ -176,7 +205,7 @@ export function initCheckoutPage(): void {
 
     try {
       if (payment !== "cod" && payment !== "bkash") throw new Error("Unsupported payment method");
-      const order = await api.post<Order>("/orders", {
+      const payload = {
         customer: {
           name,
           phone,
@@ -194,9 +223,12 @@ export function initCheckoutPage(): void {
         expectedTotal: total,
         paymentMethod: payment,
         bkashTrxId: payment === "bkash" ? trx : undefined,
-      }, true);
+      };
+      const idempotencyKey = await getIdempotencyKey(payload);
+      const order = await api.post<Order>("/orders", payload, true, { "Idempotency-Key": idempotencyKey });
 
       if (!order?.orderNo) throw new Error("Order response missing order number");
+      sessionStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
       cart.clear();
       renderSuccess(order);
     } catch (err) {

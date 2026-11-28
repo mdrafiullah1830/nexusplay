@@ -20,6 +20,24 @@ public class OrderRepository : IOrderRepository
         return order;
     }
 
+    public async Task<(Order Order, bool Created)> CreateOrGetAsync(Order order, CancellationToken ct = default)
+    {
+        try
+        {
+            await CreateAsync(order, ct);
+            return (order, true);
+        }
+        catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        {
+            var existing = await FindByIdempotencyKeyAsync(order.IdempotencyKey!, ct);
+            if (existing is not null) return (existing, false);
+            throw;
+        }
+    }
+
+    public async Task<Order?> FindByIdempotencyKeyAsync(string key, CancellationToken ct = default) =>
+        await _orders.Find(o => o.IdempotencyKey == key).FirstOrDefaultAsync(ct);
+
     public async Task<Order?> GetAsync(string id, CancellationToken ct = default) =>
         await _orders.Find(o => o.Id == id).FirstOrDefaultAsync(ct);
 

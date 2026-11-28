@@ -88,6 +88,13 @@ Open **http://localhost:5173** — `/api` requests are proxied to the backend.
 cd frontend && npm run build     # output in frontend/dist
 ```
 
+### Automated backend tests
+
+```bash
+cd backend
+dotnet test NexusPlay.slnx
+```
+
 ### Production updates
 
 Push to `main` to trigger the Cloudflare `ctrlzonebd` frontend build and the

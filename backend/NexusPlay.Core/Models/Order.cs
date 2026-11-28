@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace NexusPlay.Core.Models;
 
@@ -11,6 +12,12 @@ public class Order
 
     public string OrderNo { get; set; } = string.Empty;
     public string? UserId { get; set; }
+    [BsonIgnoreIfNull]
+    [JsonIgnore]
+    public string? IdempotencyKey { get; set; }
+    [BsonIgnoreIfNull]
+    [JsonIgnore]
+    public string? RequestFingerprint { get; set; }
     public CustomerInfo Customer { get; set; } = new();
     public List<OrderItem> Items { get; set; } = new();
 

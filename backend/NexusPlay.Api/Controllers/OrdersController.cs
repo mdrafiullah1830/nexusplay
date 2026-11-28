@@ -1,4 +1,8 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +43,13 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Order>> Place(PlaceOrderRequest req, CancellationToken ct)
     {
+        var idempotencyKey = Request.Headers["Idempotency-Key"].ToString();
+        if (idempotencyKey.Length > 0 &&
+            !Regex.IsMatch(
+                idempotencyKey,
+                @"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"))
+            return BadRequest(new { message = "Idempotency-Key must be a UUIDv4" });
+
         if (req.Customer is null || string.IsNullOrWhiteSpace(req.Customer.Name) ||
             string.IsNullOrWhiteSpace(req.Customer.Phone) ||
             string.IsNullOrWhiteSpace(req.Customer.Address))
@@ -96,12 +107,13 @@ public class OrdersController : ControllerBase
         if (req.ExpectedTotal is decimal expected && expected != subtotal + deliveryFee)
             return Conflict(new { message = "Prices changed. Review your cart before placing the order." });
 
+        var userId = User.Identity?.IsAuthenticated == true
+            ? (User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))
+            : null;
         var order = new Order
         {
             OrderNo = GenerateOrderNo(),
-            UserId = User.Identity?.IsAuthenticated == true
-                ? (User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))
-                : null,
+            UserId = userId,
             Customer = new CustomerInfo
             {
                 Name = req.Customer.Name.Trim(),
@@ -121,6 +133,14 @@ public class OrdersController : ControllerBase
             Status = method == "bkash" ? "awaiting-verification" : "pending",
         };
 
+        string? fingerprint = null;
+        if (idempotencyKey.Length > 0)
+        {
+            fingerprint = Fingerprint(order);
+            order.IdempotencyKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(idempotencyKey)));
+            order.RequestFingerprint = fingerprint;
+        }
+
         order.Tracking.Add(new TrackingEvent
         {
             Status = order.Status,
@@ -130,18 +150,30 @@ public class OrdersController : ControllerBase
             At = DateTime.UtcNow,
         });
 
-        await _orders.CreateAsync(order, ct);
-
-        // Send confirmation email & SMS
-        try
+        var created = true;
+        if (order.IdempotencyKey is null)
         {
-            await SendOrderConfirmation(order);
+            await _orders.CreateAsync(order, ct);
         }
-        catch (Exception ex)
+        else
         {
-            // The order is already stored; a notification failure must not
-            // make the customer retry and create a second order.
-            _logger.LogWarning(ex, "Order confirmation failed for {OrderNo}", order.OrderNo);
+            var result = await _orders.CreateOrGetAsync(order, ct);
+            order = result.Order;
+            created = result.Created;
+            if (!string.Equals(order.RequestFingerprint, fingerprint, StringComparison.Ordinal))
+                return Conflict(new { message = "This idempotency key was already used for a different order." });
+        }
+
+        if (created)
+        {
+            try
+            {
+                await SendOrderConfirmation(order);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Order confirmation failed for {OrderNo}", order.OrderNo);
+            }
         }
 
         return CreatedAtAction(nameof(Track), new { orderNo = order.OrderNo }, order);
@@ -219,7 +251,23 @@ public class OrdersController : ControllerBase
     private static string GenerateOrderNo()
     {
         var stamp = DateTime.UtcNow.ToString("yyMMdd");
-        var suffix = Random.Shared.Next(1000, 10000);
+        var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(5));
         return $"NP{stamp}{suffix}";
+    }
+
+    private static string Fingerprint(Order order)
+    {
+        var canonical = JsonSerializer.Serialize(new
+        {
+            order.UserId,
+            order.Customer,
+            order.Items,
+            order.PaymentMethod,
+            order.BkashTrxId,
+            order.Subtotal,
+            order.DeliveryFee,
+            order.Total,
+        }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 }
