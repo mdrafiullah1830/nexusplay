@@ -4,6 +4,7 @@
 import "./styles/main.scss";
 
 import { initNavbar } from "./components/navbar";
+import { wishlist } from "./services/wishlist";
 import { initTheme } from "./services/theme";
 import { initFooter } from "./components/footer";
 import { initHomePage } from "./pages/home";
@@ -84,6 +85,7 @@ async function initAnimationSystems(): Promise<void> {
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initNavbar();
+  wishlist.init();
   initFooter();
   bindProductCardNavigation();
   

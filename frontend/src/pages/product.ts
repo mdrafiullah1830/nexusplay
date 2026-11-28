@@ -2,6 +2,7 @@
 // NEXUSPLAY — Product detail page
 // ============================================================
 import { api } from "../services/api";
+import { wishlist } from "../services/wishlist";
 import { products as localProducts } from "../data/products";
 import { productCard } from "../components/productCard";
 import { cart, formatBDT } from "../services/cart";
@@ -111,157 +112,64 @@ async function loadRelated(p: Product): Promise<Product[]> {
 // ====================
 // Wishlist Management
 // ====================
-const WISHLIST_KEY = "nexusplay_wishlist";
+let renderVersion = 0;
 
-interface WishlistStore {
-  items: string[];
-  load(): void;
-  save(): void;
-  add(productId: string): boolean;
-  remove(productId: string): void;
-  has(productId: string): boolean;
-  count(): number;
-  dispatchWishlistEvent(): void;
-}
-
-const wishlist: WishlistStore = {
-  items: [],
-
-  load(): void {
-    try {
-      const stored = localStorage.getItem(WISHLIST_KEY);
-      if (stored) this.items = JSON.parse(stored) as string[];
-    } catch {
-      this.items = [];
-    }
-  },
-
-  save(): void {
-    try {
-      localStorage.setItem(WISHLIST_KEY, JSON.stringify(this.items));
-    } catch {
-      // Ignore storage errors
-    }
-  },
-
-  add(productId: string): boolean {
-    if (this.items.includes(productId)) return false;
-    this.items.push(productId);
-    this.save();
-    this.dispatchWishlistEvent();
-    return true;
-  },
-
-  remove(productId: string): void {
-    this.items = this.items.filter((id) => id !== productId);
-    this.save();
-    this.dispatchWishlistEvent();
-  },
-
-  has(productId: string): boolean {
-    return this.items.includes(productId);
-  },
-
-  count(): number {
-    return this.items.length;
-  },
-
-  dispatchWishlistEvent(): void {
-    document.dispatchEvent(new CustomEvent("wishlist:change"));
-  },
-};
-
-wishlist.load();
-
-// Wishlist page renderer (no-ops unless the page has the wishlist markup)
-function renderWishlist(): void {
-  const wishlistList = document.querySelector<HTMLElement>(".wishlist-list");
-  const wishlistCount = document.querySelector<HTMLElement>(".wishlist-count");
-  if (!wishlistList || !wishlistCount) return;
-
-  if (wishlist.items.length === 0) {
-    wishlistList.innerHTML = `<p class="empty-wishlist">Your wishlist is empty</p>`;
-    wishlistCount.textContent = "0";
-    return;
-  }
-
-  // Fetch products from API
-  api.get<PagedResult<Product>>("/products?pageSize=100&sort=featured").then((res) => {
-    const products = res.items.filter((p) => wishlist.items.includes(p.id));
-  const total = products.reduce((sum, p) => sum + p.price, 0);
-
-  wishlistList.innerHTML = products
-    .map(
-      (p) => `
-    <div class="wishlist-item">
-      <img src="${p.imageUrls?.[0] ?? ""}" alt="${p.name}" width="50"/>
-      <div>
-        <strong>${p.name}</strong> - ${formatBDT(p.price)}
-        <button class="btn-mini wishlist-remove" data-product-id="${p.id}">Remove</button>
-      </div>
-    </div>`,
-    )
-    .join("");
-
-  wishlistCount.textContent = String(wishlist.items.length);
-
-  const freeShipNote =
-    total >= 5000 ? "<p>Free shipping over BDT 5,000</p>" : "<p>Flat BDT 120 delivery</p>";
-
+async function renderWishlist(): Promise<void> {
+  const list = document.querySelector<HTMLElement>(".wishlist-list");
+  const count = document.querySelector<HTMLElement>(".wishlist-count");
   const summary = document.querySelector<HTMLElement>(".wishlist-summary");
-  if (summary) {
-    summary.innerHTML = `
-      <span>Total: ${formatBDT(total)}</span>
-      ${freeShipNote}
-      <a class="btn btn--dark" href="/shop.html">Continue Shopping</a>`;
+  if (!list || !count) return;
+  const version = ++renderVersion;
+  count.textContent = String(wishlist.count());
+  list.textContent = "Loading saved products…";
+  summary?.replaceChildren();
+  try {
+    const products = await wishlist.products();
+    if (version !== renderVersion) return;
+    list.replaceChildren();
+    count.textContent = String(products.length);
+    if (!products.length) list.textContent = "Your wishlist is empty";
+    for (const p of products) {
+      const row = document.createElement("div");
+      row.className = "wishlist-item";
+      const link = document.createElement("a");
+      link.href = "/product.html?id=" + encodeURIComponent(p.productId);
+      link.textContent = p.name + " — " + formatBDT(p.price);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn-mini wishlist-remove";
+      button.dataset.productId = p.productId;
+      button.textContent = "Remove";
+      row.append(link, button);
+      list.append(row);
+    }
+    if (summary && products.length) summary.textContent = "Total: " + formatBDT(products.reduce((sum, p) => sum + p.price, 0));
+  } catch {
+    if (version === renderVersion) list.textContent = "Unable to load your wishlist. Please reload to retry.";
   }
-  }).catch(() => {
-    wishlistList.innerHTML = '<p class="empty-wishlist">Unable to load your wishlist right now.</p>';
+}
+document.addEventListener("wishlist:change", () => {
+  document.querySelectorAll<HTMLButtonElement>(".wishlist-add").forEach(btn => {
+    const saved = wishlist.has(btn.dataset.productId ?? "");
+    btn.textContent = saved ? "♥ Added" : "♥ Wishlist";
+    btn.setAttribute("aria-pressed", String(saved));
   });
-}
-
-document.addEventListener("wishlist:change", renderWishlist);
-
-// Delegated handler for any ".wishlist-add" button on the page
-document.addEventListener("click", (e) => {
-  const addBtn = (e.target as HTMLElement).closest<HTMLElement>(".wishlist-add");
-  if (!addBtn) return;
-
-  const productId = addBtn.dataset.productId;
-  if (!productId) return;
-
-  if (wishlist.has(productId)) {
-    wishlist.remove(productId);
-    addBtn.innerHTML = "<span>♥ Wishlist</span>";
-  } else {
-    wishlist.add(productId);
-    addBtn.innerHTML = "<span>♥ Added</span>";
-    setTimeout(() => {
-      // Restore to the REAL state — the item may still be saved
-      addBtn.innerHTML = wishlist.has(productId) ? "<span>♥ Added</span>" : "<span>♥ Wishlist</span>";
-    }, 2000);
-  }
+  void renderWishlist();
 });
-
-// Delegated handler for ".wishlist-remove" on the wishlist page —
-// removing dispatches wishlist:change, which re-renders the list.
-document.addEventListener("click", (e) => {
-  const removeBtn = (e.target as HTMLElement).closest<HTMLElement>(".wishlist-remove");
-  if (!removeBtn) return;
-
-  const productId = removeBtn.dataset.productId;
-  if (productId) wishlist.remove(productId);
+document.addEventListener("click", async (event) => {
+  if (!(event.target instanceof Element)) return;
+  const btn = event.target.closest<HTMLButtonElement>(".wishlist-add, .wishlist-remove");
+  const id = btn?.dataset.productId;
+  if (!btn || !id || btn.disabled) return;
+  btn.disabled = true;
+  try {
+    await wishlist.set(id, !btn.classList.contains("wishlist-remove") && !wishlist.has(id));
+  } catch {
+    toast("Unable to update wishlist. Please retry.", "error");
+  } finally { btn.disabled = false; }
 });
-
-/** Current wishlist size (for the navbar badge). */
-export function getWishlistCount(): number {
-  return wishlist.count();
-}
-
-/** Wishlist page bootstrap — renders the list into wishlist.html. */
-export function initWishlistPage(): void {
-  renderWishlist();
-}
+export function getWishlistCount(): number { return wishlist.count(); }
+export function initWishlistPage(): void { void renderWishlist(); }
 
 // ============================================================
 // Page bootstrap
