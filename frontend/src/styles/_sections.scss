@@ -92,7 +92,6 @@
   &__label {
     font-family: $font-display;
     font-weight: 900;
-    text-transform: uppercase;
     font-size: clamp(1.5rem, 2.2vw, 2rem);
     line-height: 1;
     letter-spacing: -0.02em;
@@ -171,7 +170,6 @@
   &__title {
     font-family: $font-display;
     font-weight: 900;
-    text-transform: uppercase;
     font-size: clamp(1.25rem, 1.8vw, 1.6rem);
     line-height: 1;
   }
@@ -238,7 +236,6 @@
     font-size: $fs-sm;
     font-weight: 700;
     margin-top: $space-sm;
-    text-transform: uppercase;
     letter-spacing: 0.02em;
   }
 }

@@ -242,7 +242,7 @@
 
 // -- Announcement bar -----------------------------------------
 .announce {
-  background: linear-gradient(90deg, $grad-gaming, $grad-aurora);
+  background: var(--gradient-accent);
   color: $white;
   text-align: center;
   font-size: $fs-xs;

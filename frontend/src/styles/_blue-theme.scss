@@ -14,7 +14,7 @@ body[data-page="home"] .hero__hud-readout strong { color: #f7f9ff; }
 body[data-page="home"] .hero__corner--tl,
 body[data-page="home"] .hero__corner--tr,
 body[data-page="home"] .hero__corner--bl,
-body[data-page="home"] .hero__corner--br { border-color: #3385ff; }
+body[data-page="home"] .hero__corner--br { border-color: var(--color-accent); }
 body[data-page="home"] .hero__reticle,
 body[data-page="home"] .hero__reticle b { border-color: rgba(112,174,255,.3); }
 body[data-page="home"] .hero__reticle::before,
@@ -29,8 +29,8 @@ body[data-page="home"] .hero__viewer-tools button {
 }
 body[data-page="home"] .hero__viewer-tools button:hover,
 body[data-page="home"] .hero__viewer-tools button:focus-visible {
-  border-color: #3385ff;
-  background: #176bff;
+  border-color: var(--color-accent);
+  background: var(--color-accent-hover);
   color: #fff;
 }
 body[data-page="home"] .hero__media::after { border-color: rgba(91,157,255,.2); }

@@ -21,7 +21,7 @@ accessories at honest prices. Built with a Nike-inspired design system.
 - **Auth** — register / login with JWT (BCrypt-hashed passwords) and Google Sign-In
 - **Admin panel** — dashboard stats, product CRUD, order status management,
   one-click bKash payment verification
-- **Dark mode** — follows system preference (`prefers-color-scheme`)
+- **Theme** — light by default; homepage/shop preference is saved locally
 - **Responsive** — mega-menu on desktop, slide-in drawer on mobile
 
 ## 📁 Project structure
@@ -197,21 +197,21 @@ Apple‑style UI
 - Minimalist layout with generous whitespace.  
 - Hero sections featuring full‑width product images.  
 - Card‑based product tiles with subtle shadows.  
-- Clean sans‑serif typography (San Francisco / Inter) and a neutral colour palette (white/light gray background, accent colours derived from product photos).  
+- Clean system/Inter sans-serif typography and a neutral palette (#fff, #f5f5f7, #1d1d1f) with a restrained #0071e3 accent.
 - Simple navigation, sticky top bar, and lazy‑loaded images (srcset, IntersectionObserver).
 
 Nike‑style UI  
-- Bold, high‑contrast colour accents (red, orange, electric blue) used for CTA buttons, badges, and highlights.  
+- Restrained electric-blue accent for key actions; reserve product colours for imagery.
 - Dynamic hero carousels or video loops that convey motion and energy.  
 - Badge‑styled category tiles and interactive filter/sort widgets.  
-- Custom sporty sans‑serif typeface (Nike Sans) with strong weight contrast for headings.  
+- Use an original system/Inter sans-serif stack with strong weight contrast for headings.
 - Rich JavaScript animations (CSS transitions, GSAP) for hover effects and product showcases.
 
 Combining the two for ctrlzonebd.com  
 1. Base layout – adopt Apple’s clean grid and whitespace. Use a simple card component for product listings.  
 2. Hero section – replace static hero image with a short looping video or animated slider (Nike style) while keeping the minimal background.  
-3. Accent colours – pull primary accent colours from product images (e.g., a red shoe, orange jacket) and apply them to CTA buttons, badge outlines, and hover states.  
-4. Typography – keep the primary font as a clean system sans‑serif (Apple) for body copy, and use a stronger, sport‑oriented font for headings or promotional sections (Nike).  
+3. Accent colours – use #0071e3 for primary actions and derive secondary colours from product imagery only where needed.
+4. Typography – use the system/Inter sans-serif stack, with weight and size contrast for headings.
 5. Interactive components – implement subtle hover animations (fade‑in, scale) on cards (Apple) and more pronounced transition effects on promotional banners (Nike).  
 6. Responsiveness – ensure the grid collapses gracefully on mobile; keep hero images responsive with srcset.  
 
