@@ -70,9 +70,9 @@
   --shadow-lift-sm: 0 4px 12px -4px rgba(0, 0, 0, 0.3);
   --shadow-lift-md: 0 12px 24px -12px rgba(0, 0, 0, 0.4);
   --shadow-lift-lg: 0 24px 48px -24px rgba(0, 0, 0, 0.5);
-  --shadow-glow-sm: 0 0 16px -4px rgba(142, 45, 226, 0.3);
-  --shadow-glow-md: 0 0 32px -8px rgba(142, 45, 226, 0.4);
-  --shadow-glow-lg: 0 0 64px -16px rgba(142, 45, 226, 0.5);
+  --shadow-glow-sm: 0 0 16px -4px rgba(var(--color-accent-rgb), 0.3);
+  --shadow-glow-md: 0 0 32px -8px rgba(var(--color-accent-rgb), 0.4);
+  --shadow-glow-lg: 0 0 64px -16px rgba(var(--color-accent-rgb), 0.5);
 
   // ===== TRANSFORM ORIGINS =====
   --origin-center: center center;
