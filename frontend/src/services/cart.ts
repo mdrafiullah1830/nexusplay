@@ -22,7 +22,9 @@ export const FREE_DELIVERY_THRESHOLD = 5000;
 
 function read(): CartLine[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "[]") as CartLine[];
+    const raw: unknown = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((l): l is CartLine => !!l && typeof l.id === "string" && typeof l.name === "string" && Number.isFinite(l.price) && l.price > 0 && Number.isInteger(l.qty) && l.qty >= 1 && l.qty <= 50);
   } catch {
     return [];
   }
@@ -49,11 +51,14 @@ export const cart = {
   total: (): number => cart.subtotal() + cart.deliveryFee(),
 
   add: (product: Product, qty = 1, colour?: string): void => {
+    if (product.stock === "out-of-stock" || !Number.isInteger(qty) || qty < 1 || !Number.isFinite(product.price) || product.price <= 0) return;
+    qty = Math.min(50, qty);
     const lines = read();
     const existing = lines.find((l) => l.id === product.id && l.colour === colour);
     if (existing) {
       existing.qty = Math.min(50, existing.qty + qty);
     } else {
+      if (lines.length >= 50) return;
       lines.push({
         id: product.id,
         name: product.name,
@@ -69,6 +74,7 @@ export const cart = {
   },
 
   setQty: (id: string, colour: string | undefined, qty: number): void => {
+    if (!Number.isInteger(qty)) return;
     let lines = read();
     if (qty <= 0) {
       lines = lines.filter((l) => !(l.id === id && l.colour === colour));

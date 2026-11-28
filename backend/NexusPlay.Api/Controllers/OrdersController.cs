@@ -44,8 +44,12 @@ public class OrdersController : ControllerBase
             string.IsNullOrWhiteSpace(req.Customer.Address))
             return BadRequest(new { message = "Customer name, phone and address are required" });
 
-        if (req.Items is null || req.Items.Count == 0)
-            return BadRequest(new { message = "Cart is empty" });
+        if (req.Items is null || req.Items.Count == 0 || req.Items.Count > 50)
+            return BadRequest(new { message = "Cart must contain between 1 and 50 lines" });
+
+        var phone = System.Text.RegularExpressions.Regex.Replace(req.Customer.Phone, @"[\s-]", "");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^01[3-9][0-9]{8}$"))
+            return BadRequest(new { message = "Invalid Bangladeshi phone number" });
 
         var method = req.PaymentMethod?.ToLowerInvariant();
         if (method is not ("cod" or "bkash"))
@@ -55,15 +59,24 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = "bKash transaction ID is required" });
 
         var items = new List<OrderItem>();
+        var seen = new HashSet<(string, string?)>();
         foreach (var line in req.Items)
         {
-            var qty = Math.Clamp(line.Qty, 1, 50);
+            if (line is null || string.IsNullOrWhiteSpace(line.ProductId) || line.Qty < 1 || line.Qty > 50)
+                return BadRequest(new { message = "Invalid cart line or quantity" });
+            var qty = line.Qty;
+            var colour = string.IsNullOrWhiteSpace(line.Colour) ? null : line.Colour.Trim();
+            if (!seen.Add((line.ProductId, colour)))
+                return BadRequest(new { message = "Duplicate cart line" });
             var product = await _products.GetAsync(line.ProductId, ct);
             if (product is null)
                 return BadRequest(new { message = $"Product not found: {line.ProductId}" });
 
             if (product.Stock == "out-of-stock")
                 return BadRequest(new { message = $"'{product.Name}' is out of stock" });
+
+            if (product.Price <= 0 || (product.Colours?.Count > 0 && (colour is null || !product.Colours.Contains(colour))) || (colour is not null && !(product.Colours?.Contains(colour) ?? false)))
+                return BadRequest(new { message = "Invalid product price or colour selection" });
 
             items.Add(new OrderItem
             {
@@ -73,12 +86,15 @@ public class OrdersController : ControllerBase
                 Category = product.Category,
                 Price = product.Price,
                 Qty = qty,
-                Colour = line.Colour,
+                Colour = colour,
             });
         }
 
         var subtotal = items.Sum(i => i.Price * i.Qty);
         var deliveryFee = subtotal >= FreeDeliveryThreshold ? 0 : StandardDeliveryFee;
+
+        if (req.ExpectedTotal is decimal expected && expected != subtotal + deliveryFee)
+            return Conflict(new { message = "Prices changed. Review your cart before placing the order." });
 
         var order = new Order
         {
@@ -89,7 +105,7 @@ public class OrdersController : ControllerBase
             Customer = new CustomerInfo
             {
                 Name = req.Customer.Name.Trim(),
-                Phone = req.Customer.Phone.Trim(),
+                Phone = phone,
                 Email = req.Customer.Email?.Trim(),
                 Address = req.Customer.Address.Trim(),
                 City = req.Customer.City?.Trim(),

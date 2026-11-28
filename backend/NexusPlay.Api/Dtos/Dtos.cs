@@ -19,7 +19,8 @@ public record PlaceOrderRequest(
     List<PlaceItemDto> Items,
     string PaymentMethod,
     string? BkashTrxId,
-    string? PaymentGateway);
+    string? PaymentGateway,
+    decimal? ExpectedTotal = null);
 
 public record TrackRequest(string OrderNo, string Phone);
 public record StatusUpdateRequest(string Status, string? Note);

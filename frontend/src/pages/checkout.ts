@@ -191,6 +191,7 @@ export function initCheckoutPage(): void {
           qty: l.qty,
           colour: l.colour,
         })),
+        expectedTotal: total,
         paymentMethod: payment,
         bkashTrxId: payment === "bkash" ? trx : undefined,
       }, true);

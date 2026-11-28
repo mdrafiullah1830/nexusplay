@@ -21,8 +21,8 @@ Baseline main 6bb6592b1e3ac583f7402ab5432044af617bf9c5. Key findings: layered SC
 - [ ] My Orders (source implementation committed; build and isolation tests pending): add orders.html to vite.config.ts, orders route to main.ts, new pages/orders.ts; paginate and filter by authenticated user in both D1 and Mongo repositories; fix claim mapping in OrdersController; test isolation and empty/error states.
 - [ ] Wishlist (source implementation committed; verification pending): pages/product.ts + new shared service; authenticated API sync, guest merge, direct ID loading, account isolation; preserve guest data.
 - [ ] Tracking (source changes committed; runtime tests pending): pages/track.ts, services/api.ts, OrdersController, repository phone validation; require full phone or authorized owner, protect SSE or use authenticated polling, no public order data leakage.
-- [ ] Payment: review PaymentsController/PaymentService and admin status transitions; provider-specific feature flags, amount/currency/order binding, idempotency, no unsupported Stripe or unverified SSLCOMMERZ options. Keep manual bKash and COD.
-- [ ] Cart: validate qty, variants, stock and current server price; retain cart on failures, idempotent order submission, clear only after accepted order.
+- [ ] Payment (unverified gateway routes disabled; existing pending gateway orders require reconciliation; provider integration pending): review PaymentsController/PaymentService and admin status transitions; provider-specific feature flags, amount/currency/order binding, idempotency, no unsupported Stripe or unverified SSLCOMMERZ options. Keep manual bKash and COD.
+- [ ] Cart (quantity, duplicate lines, colour, phone, price validation implemented; idempotency and stock reservation pending): validate qty, variants, stock and current server price; retain cart on failures, idempotent order submission, clear only after accepted order.
 - [ ] Security: audit HTML injection, authorization, token handling, CORS, rate limits, default credentials and dependency risks. Never commit secrets.
 - [ ] Gate: successful build and tests, authenticated order isolation, COD/manual bKash mock checkout, failure and duplicate handling, wishlist and tracking verification.
 
@@ -50,4 +50,5 @@ package.json, automated frontend/backend tests, CI, README, ANIMATION_STRATEGY.m
 - My Orders: build/router entry, authenticated pagination, D1 JSON user filter and Mongo user filter implemented; test pending.
 - Tracking: removed anonymous SSE endpoint, switched to verified full-phone polling through shared API client, exact phone matching in both providers, escaped rendering and request cancellation. Historical formatted phone records may require safe normalization; verify before release.
 - Wishlist: shared guest/account service, authenticated sync, guest merge with failed items retained, direct ID fetch, safe DOM renderer. Verify account switching and failure paths.
-- Next: cart/payment review and automated build/test gates.
+- Cart: strict quantity/line/colour validation, canonical phone and server total check; client storage validation. Gateway initiation and callback actions disabled pending audit; reconcile any preexisting pending gateway orders before production release.
+- Next: automated build/test gates, idempotency, manual payment review and security checks.

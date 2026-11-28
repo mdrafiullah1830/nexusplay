@@ -38,6 +38,14 @@ public class PaymentsController : ControllerBase
         if (req.Items is null || req.Items.Count == 0)
             return BadRequest(new { message = "Cart is empty" });
 
+        // Gateway integration is not enabled until its verification contract is audited.
+        return StatusCode(503, new { message = "Online gateway payments are currently unavailable. Use COD or manual bKash." });
+    }
+
+    // Retained for future audited provider integration; not exposed as an action.
+    [NonAction]
+    private async Task<ActionResult> InitiateDisabled(PlaceOrderRequest req, CancellationToken ct)
+    {
         var gateway = req.PaymentGateway?.ToLowerInvariant();
         if (gateway is not ("sslcommerz" or "stripe") and not null)
             return BadRequest(new { message = "Payment gateway must be 'sslcommerz' or 'stripe'" });
@@ -136,8 +144,7 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    [HttpPost("webhook")]
-    [AllowAnonymous]
+    [NonAction]
     public async Task<ActionResult> Webhook(CancellationToken ct)
     {
         var form = Request.Form;
@@ -194,8 +201,7 @@ public class PaymentsController : ControllerBase
         return Ok(new { received = true });
     }
 
-    [HttpGet("success")]
-    [AllowAnonymous]
+    [NonAction]
     public async Task<ActionResult> Success([FromQuery] string orderNo, [FromQuery] string? val_id, CancellationToken ct)
     {
         var order = await _orders.FindByOrderNoAsync(orderNo, ct);
@@ -235,8 +241,7 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    [HttpGet("fail")]
-    [AllowAnonymous]
+    [NonAction]
     public async Task<ActionResult> Fail([FromQuery] string orderNo, CancellationToken ct)
     {
         var order = await _orders.FindByOrderNoAsync(orderNo, ct);
@@ -264,8 +269,7 @@ public class PaymentsController : ControllerBase
         });
     }
 
-    [HttpGet("verify/{orderNo}")]
-    [AllowAnonymous]
+    [NonAction]
     public async Task<ActionResult> Verify(string orderNo, CancellationToken ct)
     {
         var order = await _orders.FindByOrderNoAsync(orderNo, ct);
