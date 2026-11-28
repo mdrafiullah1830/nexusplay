@@ -64,18 +64,11 @@ $ease: cubic-bezier(0.4, 0, 0.2, 1);
 $speed: 0.25s;
 
 // ============================================================
-// Gradient Palette (vibrant, gaming-inspired)
+// Restrained brand gradients
 // ============================================================
-$grad-aurora: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$grad-neon: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-$grad-ocean: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-$grad-forest: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-$grad-sunset: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-$grad-midnight: linear-gradient(135deg, #203a43 0%, #2c5364 100%);
-$grad-royal: linear-gradient(135deg, #834d9b 0%, #d04ed9 100%);
-$grad-gaming: linear-gradient(225deg, #8e2de2 0%, #4a00e0 100%);
-$grad-glass: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%);
-$grad-mesh: conic-gradient(from 180deg at 50% 50%, #ff00cc, #3333ff, #00ccff, #ff00cc);
+$grad-aurora: var(--gradient-accent);
+$grad-gaming: var(--gradient-accent);
+$grad-mesh: var(--gradient-mesh);
 
 // ============================================================
 // Breakpoints (mobile-first)
@@ -94,6 +87,10 @@ $bp-xl: 1280px;
   --color-muted: #{$gray-500};
   --color-border: #{$gray-300};
   --color-accent: #{$accent};
+  --color-accent-rgb: 0, 113, 227;
+  --color-accent-hover: #{$accent-hover};
+  --gradient-accent: linear-gradient(135deg, #0063c7 0%, #0071e3 100%);
+  --gradient-mesh: conic-gradient(from 180deg at 50% 50%, #0063c7, #0071e3, #e8f3ff, #0063c7);
   --accent: var(--color-accent);
   --focus-ring: var(--color-accent);
   --color-danger: #{$danger};
