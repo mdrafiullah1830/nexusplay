@@ -5,8 +5,8 @@
 // ============================================================
 // Typography
 // ============================================================
-$font-display: "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-$font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+$font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+$font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
 $fs-hero: clamp(3rem, 9vw, 7.5rem);
 $fs-h1: clamp(2rem, 5vw, 3.5rem);
@@ -19,40 +19,21 @@ $fs-xs: 0.75rem;
 // ============================================================
 // Color System (Apple-inspired Light Mode)
 // ============================================================
-$ink: #111111;
+$ink: #1d1d1f;
 $white: #ffffff;
 
-$gray-50: #f8f8f8;
-$gray-100: #f4f4f4;
-$gray-200: #e4e4e4;
-$gray-300: #d4d4d4;
-$gray-500: #888888;
-$gray-600: #555555;
-$gray-700: #222222;
+$gray-50: #f5f5f7;
+$gray-100: #f5f5f7;
+$gray-200: #e8e8ed;
+$gray-300: #d2d2d7;
+$gray-500: #6e6e73;
+$gray-600: #515154;
+$gray-700: #1d1d1f;
 
 $accent: #0071e3; // Apple blue
-$danger: #d33b3b;
-$success: #1f9d55;
-$accent-hover: #0068c9;
-
-// ============================================================
-// Dark Mode Overrides
-// ============================================================
-[data-theme="dark"] {
-  $ink: #f5f5f5;
-  $white: #111111;
-
-  $gray-50: #151515;
-  $gray-100: #1d1d1d;
-  $gray-200: #272727;
-  $gray-300: #333333;
-  $gray-500: #a0a0a0;
-  $gray-600: #777777;
-  $gray-700: #e0e0e0;
-
-  $accent: #0071e3;
-  $accent-hover: #0068c9;
-}
+$danger: #b42318;
+$success: #167d3e;
+$accent-hover: #0063c7;
 
 // ============================================================
 // Spacing
@@ -96,19 +77,6 @@ $grad-gaming: linear-gradient(225deg, #8e2de2 0%, #4a00e0 100%);
 $grad-glass: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%);
 $grad-mesh: conic-gradient(from 180deg at 50% 50%, #ff00cc, #3333ff, #00ccff, #ff00cc);
 
-// Dark mode gradient variants
-[data-theme="dark"] {
-  $grad-aurora: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  $grad-neon: linear-gradient(135deg, #ec4899 0%, #ef4444 100%);
-  $grad-ocean: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-  $grad-forest: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  $grad-sunset: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  $grad-midnight: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  $grad-royal: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  $grad-gaming: linear-gradient(225deg, #7c3aed 0%, #4f46e5 100%);
-  $grad-glass: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%);
-}
-
 // ============================================================
 // Breakpoints (mobile-first)
 // ============================================================
@@ -116,6 +84,45 @@ $bp-sm: 640px;
 $bp-md: 768px;
 $bp-lg: 1024px;
 $bp-xl: 1280px;
+
+:root {
+  color-scheme: light;
+  --color-bg: #{$white};
+  --color-surface: #{$white};
+  --color-surface-subtle: #{$gray-50};
+  --color-ink: #{$ink};
+  --color-muted: #{$gray-500};
+  --color-border: #{$gray-300};
+  --color-accent: #{$accent};
+  --accent: var(--color-accent);
+  --focus-ring: var(--color-accent);
+  --color-danger: #{$danger};
+  --color-success: #{$success};
+  --font-display: #{$font-display};
+  --font-body: #{$font-body};
+  --font-size-hero: #{$fs-hero};
+  --font-size-h1: #{$fs-h1};
+  --font-size-h2: #{$fs-h2};
+  --font-size-h3: #{$fs-h3};
+  --font-size-body: #{$fs-body};
+  --font-size-sm: #{$fs-sm};
+  --font-size-xs: #{$fs-xs};
+  --container-max: #{$container-max};
+  --container-pad: #{$container-pad};
+  --space-xs: #{$space-xs};
+  --space-sm: #{$space-sm};
+  --space-md: #{$space-md};
+  --space-lg: #{$space-lg};
+  --space-xl: #{$space-xl};
+  --space-2xl: #{$space-2xl};
+  --space-3xl: #{$space-3xl};
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-pill: #{$radius-pill};
+  --motion-ease: #{$ease};
+  --motion-duration: #{$speed};
+}
 
 // ============================================================
 // Mixins
@@ -148,7 +155,6 @@ $bp-xl: 1280px;
 @mixin heading-display {
   font-family: $font-display;
   font-weight: 900;
-  text-transform: uppercase;
   letter-spacing: -0.02em;
   line-height: 0.95;
 }

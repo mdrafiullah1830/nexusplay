@@ -135,7 +135,7 @@ body[data-page="home"] .hero__title {
   background-image: none;
   -webkit-text-fill-color: currentColor;
   filter: none;
-  font-family: "Archivo", "Arial Black", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(3.6rem, 7.25vw, 7.6rem);
   font-weight: 900;
   letter-spacing: -0.085em;
@@ -269,7 +269,7 @@ body[data-page="home"] .hero__btn--ghost:hover {
 }
 .hero__media-caption strong {
   max-width: 45%;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(0.8rem, 1.15vw, 1rem);
   text-align: right;
 }
@@ -354,7 +354,7 @@ body[data-page="home"] .section__title {
   background: none;
   background-image: none;
   -webkit-text-fill-color: currentColor;
-  font-family: "Archivo", "Arial Black", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2.1rem, 4.1vw, 4.1rem);
   font-weight: 800;
   letter-spacing: -0.075em;
@@ -422,7 +422,7 @@ body[data-page="home"] .tile__eyebrow {
 }
 body[data-page="home"] .tile__label {
   color: #fff;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1.25rem, 1.8vw, 1.85rem);
   letter-spacing: -0.055em;
   line-height: 0.98;
@@ -481,7 +481,7 @@ body[data-page="home"] .tile__btn {
   font-weight: 800;
 }
 .brand-row__item strong {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1.05rem, 2vw, 1.7rem);
   font-weight: 800;
   letter-spacing: -0.06em;
@@ -603,7 +603,7 @@ body[data-page="home"] .cat-tile:hover .cat-tile__circle img { transform: scale(
 }
 .cat-tile__meta strong {
   color: var(--signal-ink);
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   letter-spacing: -0.04em;
 }
@@ -629,7 +629,7 @@ body[data-page="home"] .cat-tile--all {
 }
 .cat-tile--all__mark {
   color: var(--signal-blue);
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(5rem, 9vw, 8rem);
   font-weight: 900;
   letter-spacing: -0.12em;
@@ -658,7 +658,7 @@ body[data-page="home"] .cat-tile--all .cat-tile__meta small { color: rgba(255, 2
 }
 .signal-support h2 {
   color: var(--signal-ink);
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2.4rem, 5vw, 4.8rem);
   font-weight: 800;
   letter-spacing: -0.075em;
@@ -688,7 +688,7 @@ body[data-page="home"] .footer {
 }
 body[data-page="home"] .footer__brand {
   color: #fff;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   letter-spacing: -0.08em;
 }
@@ -699,7 +699,7 @@ body[data-page="home"] .footer__bottom { border-color: rgba(255, 255, 255, 0.16)
 
 body[data-page="home"] a:focus-visible,
 body[data-page="home"] button:focus-visible {
-  outline: 3px solid #70aaff;
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -1064,7 +1064,7 @@ body[data-page="home"] .hero__product-stage > img {
 }
 .hero__hud-readout strong {
   color: #176bff;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: 0.78rem;
   letter-spacing: 0.03em;
 }
@@ -1109,7 +1109,7 @@ body[data-page="home"] .hero__product-stage > img {
   white-space: nowrap;
 }
 .arena-marquee__group span {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--font-display);
   font-size: 0.67rem;
   font-weight: 800;
   letter-spacing: 0.19em;
@@ -1263,7 +1263,7 @@ body[data-page="home"] .hero__product-stage.is-dragging::after { opacity: 0.9; }
   border-radius: 0;
   background: rgba(255, 255, 250, 0.72);
   color: #176bff;
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 900;
   line-height: 1;
@@ -1282,7 +1282,7 @@ body[data-page="home"] .hero__product-stage.is-dragging::after { opacity: 0.9; }
   color: #b8d5ff;
 }
 .hero__viewer-tools button:focus-visible {
-  outline: 2px solid #176bff;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -1544,7 +1544,7 @@ body[data-page="home"] .footer__item:hover,
 body[data-page="home"] .footer__contact a:hover { color: #75aaff; }
 body[data-page="home"] a:focus-visible,
 body[data-page="home"] button:focus-visible {
-  outline-color: #5b9dff;
+  outline-color: var(--focus-ring);
   outline-offset: 3px;
 }
 @media (max-width: 760px) {

@@ -60,7 +60,7 @@ body[data-page="home"] .experience::before {
 body[data-page="home"] .experience__title {
   max-width: 850px;
   color: #f7f9ff;
-  font-family: "Archivo", "Arial Black", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2.7rem, 6.4vw, 6.2rem);
   font-weight: 900;
   letter-spacing: -.085em;
@@ -122,7 +122,7 @@ body[data-page="home"] .experience__title {
 body[data-page="home"] .experience__step h3 {
   max-width: 560px;
   color: #f7f9ff;
-  font-family: "Archivo", "Arial Black", sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(1.8rem, 2.8vw, 3rem);
   font-weight: 800;
   letter-spacing: -.075em;
