@@ -16,12 +16,12 @@ const DICT: Record<string, Entry> = {
 
   // Announcement bar
   "announce.shipping": {
-    en: "Free delivery on orders over BDT 5,000",
-    bn: "৳৫,০০০-এর বেশি অর্ডারে ফ্রি ডেলিভারি",
+    en: "Free delivery on orders of BDT 5,000 or more",
+    bn: "৳৫,০০০ বা তার বেশি অর্ডারে ফ্রি ডেলিভারি",
   },
   "announce.payment": {
-    en: "bKash · Cards · Cash on delivery",
-    bn: "bKash · কার্ড · ক্যাশ অন ডেলিভারি",
+    en: "Manual bKash · Cash on delivery",
+    bn: "ম্যানুয়াল bKash · ক্যাশ অন ডেলিভারি",
   },
   "announce.preorder": {
     en: "Pre-order: GameSir G7 Pro 8K Phantom Blade Zero",
@@ -32,8 +32,8 @@ const DICT: Record<string, Entry> = {
     bn: "হটলাইন ও WhatsApp: +880 1782-577251",
   },
   "announce.trust": {
-    en: "100% authentic gear · 30-day returns · Warranty support",
-    bn: "১০০% অরিজিনাল গিয়ার · ৩০ দিনের রিটার্ন · ওয়ারেন্টি সাপোর্ট",
+    en: "Order tracking · After-sales support",
+    bn: "অর্ডার ট্র্যাকিং · বিক্রয়-পরবর্তী সহায়তা",
   },
 
   // Primary navigation

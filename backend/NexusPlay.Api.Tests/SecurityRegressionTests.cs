@@ -1,8 +1,11 @@
 using System.Reflection;
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -33,6 +36,38 @@ public class SecurityRegressionTests
 
         Assert.NotNull(action);
         Assert.Equal("OrderPolicy", action.GetCustomAttribute<EnableRateLimitingAttribute>()?.PolicyName);
+    }
+
+    [Fact]
+    public void ForwardedClientIpRequiresAnExplicitSingleTrustedProxyHop()
+    {
+        var proxy = IPAddress.Parse("10.2.3.4");
+        var options = TrustedProxyConfig.CreateOptions([proxy]);
+
+        Assert.Equal(1, options.ForwardLimit);
+        Assert.Equal(Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor, options.ForwardedHeaders);
+        Assert.Equal(proxy, Assert.Single(options.KnownProxies));
+        Assert.Empty(options.KnownNetworks);
+        Assert.Throws<ArgumentException>(() => TrustedProxyConfig.CreateOptions([]));
+        Assert.Throws<InvalidOperationException>(() => TrustedProxyConfig.Parse("10.2.3.4,any"));
+    }
+
+    [Theory]
+    [InlineData("10.2.3.4", "203.0.113.9")]
+    [InlineData("10.2.3.5", "10.2.3.5")]
+    public async Task ForwardedHeaderOnlyChangesIpForTheTrustedPeer(string peer, string expected)
+    {
+        var services = new ServiceCollection().AddLogging().BuildServiceProvider();
+        var pipeline = new ApplicationBuilder(services);
+        pipeline.UseForwardedHeaders(TrustedProxyConfig.CreateOptions([IPAddress.Parse("10.2.3.4")]));
+        pipeline.Run(_ => Task.CompletedTask);
+
+        var context = new DefaultHttpContext { RequestServices = services };
+        context.Connection.RemoteIpAddress = IPAddress.Parse(peer);
+        context.Request.Headers["X-Forwarded-For"] = "203.0.113.9";
+        await pipeline.Build()(context);
+
+        Assert.Equal(IPAddress.Parse(expected), context.Connection.RemoteIpAddress);
     }
 
     [Fact]
